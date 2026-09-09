@@ -7,8 +7,13 @@ import { colors, radius } from '../theme/tokens';
 const CARD_HEIGHT = 292;
 /** Drag past this many pixels to commit a reaction. */
 const COMMIT_PX = 90;
-/** Stamps reach full opacity at this drag distance. */
+/** Stamps reach their peak opacity at this drag distance. */
 const STAMP_PX = 80;
+/** Peak opacity of the like/dislike glyph, which overlays the card text. */
+const STAMP_OPACITY = 0.5;
+/** After a reaction commits, the glyph holds this long, then fades out. */
+const STAMP_HOLD_MS = 1500;
+const STAMP_FADE_MS = 400;
 /** Movement under this counts as a tap, not a drag. */
 const TAP_PX = 6;
 
@@ -74,6 +79,24 @@ function Equaliser({ visible }: { visible: boolean }) {
 export function FactCard({ fact, kicker, speaking, rewritten, emptyText, onReact, onPress }: Props) {
   const dragX = useRef(new Animated.Value(0)).current;
   const glow = useRef(new Animated.Value(0)).current;
+  // Committed-reaction stamps: shown at peak, held briefly, then faded out.
+  const likeHold = useRef(new Animated.Value(0)).current;
+  const dislikeHold = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const reaction = fact?.reaction ?? null;
+    const active = reaction === 'like' ? likeHold : reaction === 'dislike' ? dislikeHold : null;
+    likeHold.setValue(0);
+    dislikeHold.setValue(0);
+    if (!active) return;
+    active.setValue(STAMP_OPACITY);
+    const fade = Animated.sequence([
+      Animated.delay(STAMP_HOLD_MS),
+      Animated.timing(active, { toValue: 0, duration: STAMP_FADE_MS, useNativeDriver: false }),
+    ]);
+    fade.start();
+    return () => fade.stop();
+  }, [fact?.key, fact?.reaction, likeHold, dislikeHold]);
   // PanResponder is created once, so it reads the live values through refs.
   const factRef = useRef(fact);
   factRef.current = fact;
@@ -137,11 +160,14 @@ export function FactCard({ fact, kicker, speaking, rewritten, emptyText, onReact
     outputRange: ['-10deg', '10deg'],
     extrapolate: 'clamp',
   });
-  const dragLike = dragX.interpolate({ inputRange: [0, STAMP_PX], outputRange: [0, 1], extrapolate: 'clamp' });
-  const dragDislike = dragX.interpolate({ inputRange: [-STAMP_PX, 0], outputRange: [1, 0], extrapolate: 'clamp' });
-  // A committed reaction pins its stamp on; otherwise it tracks the drag.
-  const likeOpacity = fact.reaction === 'like' ? 1 : dragLike;
-  const dislikeOpacity = fact.reaction === 'dislike' ? 1 : dragDislike;
+  // Stamps sit centred over the text, so they never exceed half opacity.
+  const dragLike = dragX.interpolate({ inputRange: [0, STAMP_PX], outputRange: [0, STAMP_OPACITY], extrapolate: 'clamp' });
+  const dragDislike = dragX.interpolate({ inputRange: [-STAMP_PX, 0], outputRange: [STAMP_OPACITY, 0], extrapolate: 'clamp' });
+  // While dragging the stamp tracks the finger; after a commit the hold value
+  // keeps it visible for a moment, then fades it. Clamp so the two never stack.
+  const clamp = { inputRange: [0, STAMP_OPACITY], outputRange: [0, STAMP_OPACITY], extrapolate: 'clamp' as const };
+  const likeOpacity = Animated.add(dragLike, likeHold).interpolate(clamp);
+  const dislikeOpacity = Animated.add(dragDislike, dislikeHold).interpolate(clamp);
 
   return (
     <View style={styles.slot}>
@@ -178,10 +204,10 @@ export function FactCard({ fact, kicker, speaking, rewritten, emptyText, onReact
           <Equaliser visible={speaking} />
         </View>
 
-        <Animated.View style={[styles.stamp, styles.stampLike, { opacity: likeOpacity }]}>
+        <Animated.View pointerEvents="none" style={[styles.stamp, { opacity: likeOpacity }]}>
           <Text style={styles.stampLikeGlyph}>♥</Text>
         </Animated.View>
-        <Animated.View style={[styles.stamp, styles.stampDislike, { opacity: dislikeOpacity }]}>
+        <Animated.View pointerEvents="none" style={[styles.stamp, { opacity: dislikeOpacity }]}>
           <Text style={styles.stampDislikeGlyph}>✕</Text>
         </Animated.View>
       </Animated.View>
@@ -241,11 +267,18 @@ const styles = StyleSheet.create({
   bar: { width: 3, height: 14, borderRadius: 2, backgroundColor: colors.accent },
   // Swipe feedback: a bare glyph rather than a bordered stamp, so the drag
   // reads at a glance without competing with the fact text.
-  stamp: { position: 'absolute', top: 14 },
-  stampLike: { left: 18 },
-  stampDislike: { right: 18 },
-  stampLikeGlyph: { fontSize: 38, lineHeight: 44, color: colors.accent },
-  stampDislikeGlyph: { fontSize: 34, lineHeight: 44, color: colors.neutral400 },
+  // Centred over the whole card, at half opacity so the text stays readable.
+  stamp: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stampLikeGlyph: { fontSize: 76, lineHeight: 88, color: colors.accent },
+  stampDislikeGlyph: { fontSize: 68, lineHeight: 88, color: colors.neutral400 },
   empty: {
     flex: 1,
     borderRadius: radius.lg,
