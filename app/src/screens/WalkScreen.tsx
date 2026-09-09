@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useWalkLocation } from '../location/useWalkLocation';
 import { loadTags, saveTags } from '../facts/preferenceStore';
@@ -304,7 +305,7 @@ export function WalkScreen() {
             accessibilityLabel="Settings"
             style={({ pressed }) => [styles.iconButton, pressed && styles.iconButtonPressed]}
           >
-            <Text style={styles.iconGlyph}>⚙</Text>
+            <Feather name="settings" size={22} color={colors.neutral400} />
           </Pressable>
         </View>
 
@@ -409,7 +410,6 @@ const styles = StyleSheet.create({
   title: { fontSize: 18, fontWeight: '500', letterSpacing: -0.18, color: colors.text },
   iconButton: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md },
   iconButtonPressed: { backgroundColor: colors.neutralPress },
-  iconGlyph: { fontSize: 20, color: colors.neutral400 },
   statusRow: { height: 24, flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
   dot: { width: 6, height: 6, borderRadius: 3 },
   statusText: { fontSize: 12, color: colors.neutral500, flex: 1 },
