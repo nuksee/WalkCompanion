@@ -419,7 +419,7 @@ export function WalkScreen() {
             style={({ pressed }) => [styles.ghost, pressed && styles.ghostPressed]}
           >
             <Text style={[styles.ghostText, busy && styles.disabled]}>
-              {busy ? 'Loading…' : 'Random fact'}
+              {busy ? 'Loading…' : demoSpeed > 0 ? `Demo x${demoSpeed}` : 'Random fact'}
             </Text>
           </Pressable>
         </View>
