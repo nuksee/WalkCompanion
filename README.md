@@ -12,7 +12,7 @@ Personal learning project, currently being tested in Toronto. iOS and Android vi
 - Lists everything heard on the walk, with tap to replay.
 - Optionally rewrites each fact into short, natural spoken sentences using your own Gemini API key. Open **Settings** in the app to paste a key. It is stored in the phone's secure storage and only sent to Google's API. Without a key you hear the raw Wikipedia text.
 
-Planned next: background tracking with the phone locked, local notifications, more sources, and offline city packs. See [intent.md](intent.md) for the full vision and roadmap.
+Planned next: choosing the kinds of facts you want (History, Fun fact, Pop culture, Hidden gem, and so on) and liking or disliking facts to tune what comes next, then background tracking with the phone locked, local notifications, more sources, and offline city packs. See [intent.md](intent.md) for the full vision and roadmap.
 
 ## Run it on your phone
 

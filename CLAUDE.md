@@ -10,7 +10,7 @@ Always keep the implementation simple and avoid over-engineering. Prefer the sma
 
 If a code change meaningfully affects behavior, constraints, setup, or how contributors work, update the relevant docs at the same time.
 
-As of September 2026 the Expo app in `app/` covers roadmap steps 1 and 2: location, speech, proximity triggers, and live Wikipedia facts. Keep things simple; do not add a backend or new dependencies until a step actually needs them.
+As of September 2026 the Expo app in `app/` covers roadmap steps 1 to 3: location, speech, proximity triggers, live Wikipedia facts, and optional LLM rewriting with the user's own key. Keep things simple; do not add a backend or new dependencies until a step actually needs them.
 
 ## What we are building
 
@@ -33,6 +33,7 @@ Timing is hybrid: live generation when online, pre-downloaded city packs as the 
 - Rank candidate facts by proximity, source richness, and novelty. Priority order for content: history and architecture, then local tips and culture, then quirky trivia. Practical info (opening hours, ratings as content) is out of scope for v1.
 - Location is sent to the aggregation service only as the coordinates needed to fetch nearby places; no server-side location history in the personal version.
 - In the personal version the user supplies their own LLM API key; it stays in the device secure store and is only sent to the LLM provider. Never log it or write it anywhere else.
+- Planned (roadmap step 4, not built): users steer content two ways, by selecting fact-type tags (Fun fact, History, Architecture, Pop culture, Famous people, Hidden gem, Local tips) and by liking or disliking a heard fact (swipe on its card). Both need every fact to carry tags, so when touching fact generation, keep `PointOfInterest.category` in mind as the seed of a multi-tag field. The device is the source of truth for preferences and feedback; they are sent with LLM or server requests as needed. Whether they are ever stored server-side is an open question tied to accounts.
 
 ## Mobile app layout (`app/`)
 
