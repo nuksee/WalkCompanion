@@ -1,5 +1,6 @@
 import * as Location from 'expo-location';
 import { useEffect, useState } from 'react';
+import { log, logError } from '../log';
 
 export type PermissionState = 'unknown' | 'granted' | 'denied';
 
@@ -27,6 +28,7 @@ export function useWalkLocation(enabled: boolean) {
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (cancelled) return;
+      log('location', 'permission', status);
       if (status !== 'granted') {
         setPermission('denied');
         return;
@@ -40,6 +42,12 @@ export function useWalkLocation(enabled: boolean) {
             distanceInterval: 10,
           },
           (loc) => {
+            log(
+              'location',
+              loc.coords.latitude.toFixed(5),
+              loc.coords.longitude.toFixed(5),
+              `±${Math.round(loc.coords.accuracy ?? 0)}m`,
+            );
             setPosition({
               latitude: loc.coords.latitude,
               longitude: loc.coords.longitude,
@@ -49,6 +57,7 @@ export function useWalkLocation(enabled: boolean) {
           },
         );
       } catch (e) {
+        logError('location', e);
         setError(e instanceof Error ? e.message : String(e));
       }
     })();

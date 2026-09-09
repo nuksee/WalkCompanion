@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { LLM_MODEL } from '../llm/rewriteFact';
 import { loadApiKey, saveApiKey } from '../llm/settings';
+import { log } from '../log';
 
 interface Props {
   onKeyChange: (key: string | null) => void;
@@ -23,6 +24,7 @@ export function SettingsPanel({ onKeyChange }: Props) {
   const save = async () => {
     await saveApiKey(draft);
     const key = draft.trim() || null;
+    log('settings', key ? 'API key saved' : 'API key cleared');
     setSaved(!!key);
     setDraft('');
     onKeyChange(key);

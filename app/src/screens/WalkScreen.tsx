@@ -7,6 +7,7 @@ import { torontoSeed } from '../facts/torontoSeed';
 import type { PointOfInterest } from '../facts/types';
 import { fetchNearbyWikipedia } from '../facts/wikipedia';
 import { rewriteFact } from '../llm/rewriteFact';
+import { log, logError } from '../log';
 import { narrate, stopNarration } from '../speech/narrator';
 import { SettingsPanel } from './SettingsPanel';
 
@@ -46,15 +47,21 @@ export function WalkScreen() {
       return;
     }
     lastFetchAt.current = { latitude: position.latitude, longitude: position.longitude };
+    log('wikipedia', 'fetching near', position.latitude.toFixed(4), position.longitude.toFixed(4));
     fetchNearbyWikipedia(position.latitude, position.longitude)
       .then((found) => {
         setFetchError(null);
         setPois((current) => {
           const known = new Set(current.map((p) => p.id));
-          return [...current, ...found.filter((p) => !known.has(p.id))];
+          const fresh = found.filter((p) => !known.has(p.id));
+          log('wikipedia', `${found.length} articles, ${fresh.length} new:`, fresh.map((p) => p.name));
+          return [...current, ...fresh];
         });
       })
-      .catch((e) => setFetchError(e instanceof Error ? e.message : String(e)));
+      .catch((e) => {
+        logError('wikipedia', e);
+        setFetchError(e instanceof Error ? e.message : String(e));
+      });
   }, [walking, position]);
 
   useEffect(() => {
@@ -69,18 +76,32 @@ export function WalkScreen() {
     narratedIds.current.add(next.poi.id);
     speaking.current = true;
     const key = apiKey.current;
-    (key ? rewriteFact(next.poi, key) : Promise.resolve(next.poi.fact))
+    log('trigger', next.poi.name, `${Math.round(next.distance)}m away`, key ? 'with LLM' : 'raw');
+    const rewritten = key
+      ? rewriteFact(next.poi, key)
+          .then((text) => {
+            if (!text) log('llm', 'empty response, using raw text');
+            return text ?? next.poi.fact;
+          })
+          .catch((e) => {
+            logError('llm', e);
+            return next.poi.fact;
+          })
+      : Promise.resolve(next.poi.fact);
+    rewritten
       .then((spoken) => {
+        log('narrate', spoken);
         setHistory((h) => [{ poi: next.poi, spoken, at: Date.now() }, ...h]);
         return narrate(`${next.poi.name}. ${spoken}`);
       })
-      .catch(() => undefined)
+      .catch((e) => logError('narrate', e))
       .finally(() => {
         speaking.current = false;
       });
   }, [walking, position, pois]);
 
   const toggleWalk = () => {
+    log('walk', walking ? 'stop' : 'start');
     if (walking) {
       stopNarration();
       speaking.current = false;

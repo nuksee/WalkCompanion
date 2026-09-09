@@ -30,18 +30,16 @@ export function extractText(json: unknown): string | null {
 
 /**
  * Asks the model to turn a raw extract into a short spoken fact.
- * Falls back to the original text on any failure so narration never blocks.
+ * Throws on HTTP or network failure and returns null on an empty reply;
+ * the caller decides how to fall back. No logging here so the module
+ * stays importable under Node for tests.
  */
-export async function rewriteFact(poi: PointOfInterest, apiKey: string): Promise<string> {
-  try {
-    const res = await fetch(`${LLM_BASE_URL}/chat/completions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ model: LLM_MODEL, messages: buildMessages(poi), temperature: 0.7 }),
-    });
-    if (!res.ok) return poi.fact;
-    return extractText(await res.json()) ?? poi.fact;
-  } catch {
-    return poi.fact;
-  }
+export async function rewriteFact(poi: PointOfInterest, apiKey: string): Promise<string | null> {
+  const res = await fetch(`${LLM_BASE_URL}/chat/completions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({ model: LLM_MODEL, messages: buildMessages(poi), temperature: 0.7 }),
+  });
+  if (!res.ok) throw new Error(`LLM HTTP ${res.status}`);
+  return extractText(await res.json());
 }

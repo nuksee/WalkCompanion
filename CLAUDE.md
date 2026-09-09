@@ -42,7 +42,8 @@ Timing is hybrid: live generation when online, pre-downloaded city packs as the 
 - `src/facts/proximity.ts` holds the pure trigger logic (haversine distance, nearest untriggered POI within radius). Keep it free of React and Expo imports so it stays unit-testable under Node.
 - `src/facts/wikipedia.ts` queries Wikipedia's keyless geosearch API directly from the app and maps articles to `PointOfInterest` (`src/facts/types.ts`). `WalkScreen` refetches after moving ~300 m and merges results with `src/facts/torontoSeed.ts`, a few hand-written facts kept for testing. There is no backend yet; one is only needed once keyed sources (Google Maps, Reddit) or LLM generation arrive.
 - `src/speech/narrator.ts` wraps `expo-speech`; it resolves when speech finishes so the screen can serialise narration.
-- `src/llm/` is bring-your-own-key LLM rewriting. `settings.ts` stores the user's key in `expo-secure-store`. `rewriteFact.ts` fixes the provider (Gemini via its OpenAI-compatible endpoint; switching providers means changing `LLM_BASE_URL`/`LLM_MODEL`), turns a raw extract into 1-3 spoken sentences just before narration, and falls back to the raw text on any error. Keep it free of Expo imports so it stays testable under Node. With no key saved, raw Wikipedia text is narrated. `src/screens/SettingsPanel.tsx` is the key entry UI.
+- `src/llm/` is bring-your-own-key LLM rewriting. `settings.ts` stores the user's key in `expo-secure-store`. `rewriteFact.ts` fixes the provider (Gemini via its OpenAI-compatible endpoint; switching providers means changing `LLM_BASE_URL`/`LLM_MODEL`), and turns a raw extract into 1-3 spoken sentences just before narration; it throws or returns null on failure and `WalkScreen` falls back to the raw text. Keep it free of Expo and app imports (including `log`) so it stays testable under Node. With no key saved, raw Wikipedia text is narrated. `src/screens/SettingsPanel.tsx` is the key entry UI.
+- `src/log.ts` is the only logging path (`log(tag, ...)` / `logError(tag, err)`). Output appears in the terminal running `expo start` while the phone is connected. Log key events (location, wikipedia, trigger, narrate, llm, settings) and every caught error; never log the API key.
 - `app/AGENTS.md` (from the Expo template) points at the versioned Expo SDK 57 docs; check them before using an Expo API.
 
 ## Commands
@@ -59,7 +60,7 @@ npm test               # node --test over src/**/*.test.ts (uses --experimental-
 node --experimental-strip-types --test src/facts/proximity.test.ts   # single test file
 ```
 
-Tests use Node's built-in runner, so test files import with explicit `.ts` extensions and must not import React Native or Expo modules. They are excluded from `tsc` in `tsconfig.json`. There is no linter configured.
+Tests use Node's built-in runner, so test files import with explicit `.ts` extensions, and any module under test must not import React Native, Expo, or app modules without extensions (Node cannot resolve `'../log'`; Metro cannot use `'../log.ts'`). They are excluded from `tsc` in `tsconfig.json`. There is no linter configured.
 
 ## Open questions to resolve before building the relevant piece
 
