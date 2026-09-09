@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useWalkLocation } from '../location/useWalkLocation';
@@ -6,10 +6,14 @@ import { distanceMeters, pickNextFact } from '../facts/proximity';
 import { torontoSeed } from '../facts/torontoSeed';
 import type { PointOfInterest } from '../facts/types';
 import { fetchNearbyWikipedia } from '../facts/wikipedia';
+import { rewriteFact } from '../llm/rewriteFact';
 import { narrate, stopNarration } from '../speech/narrator';
+import { SettingsPanel } from './SettingsPanel';
 
 interface NarratedFact {
   poi: PointOfInterest;
+  /** What was actually spoken: the LLM rewrite when a key is set, else the raw fact. */
+  spoken: string;
   at: number;
 }
 
@@ -25,6 +29,10 @@ export function WalkScreen() {
   const narratedIds = useRef(new Set<string>());
   const speaking = useRef(false);
   const lastFetchAt = useRef<{ latitude: number; longitude: number } | null>(null);
+  const apiKey = useRef<string | null>(null);
+  const onKeyChange = useCallback((key: string | null) => {
+    apiKey.current = key;
+  }, []);
 
   // Load nearby Wikipedia articles when the walk starts and after moving a few hundred metres.
   useEffect(() => {
@@ -59,9 +67,13 @@ export function WalkScreen() {
     );
     if (!next) return;
     narratedIds.current.add(next.poi.id);
-    setHistory((h) => [{ poi: next.poi, at: Date.now() }, ...h]);
     speaking.current = true;
-    narrate(`${next.poi.name}. ${next.poi.fact}`)
+    const key = apiKey.current;
+    (key ? rewriteFact(next.poi, key) : Promise.resolve(next.poi.fact))
+      .then((spoken) => {
+        setHistory((h) => [{ poi: next.poi, spoken, at: Date.now() }, ...h]);
+        return narrate(`${next.poi.name}. ${spoken}`);
+      })
       .catch(() => undefined)
       .finally(() => {
         speaking.current = false;
@@ -79,14 +91,15 @@ export function WalkScreen() {
     setWalking((w) => !w);
   };
 
-  const replay = (poi: PointOfInterest) => {
-    narrate(`${poi.name}. ${poi.fact}`).catch(() => undefined);
+  const replay = (item: NarratedFact) => {
+    narrate(`${item.poi.name}. ${item.spoken}`).catch(() => undefined);
   };
 
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
       <Text style={styles.title}>WalkCompanion</Text>
+      <SettingsPanel onKeyChange={onKeyChange} />
 
       <Pressable
         onPress={toggleWalk}
@@ -119,9 +132,9 @@ export function WalkScreen() {
           <Text style={styles.muted}>Nothing yet. Walk towards a landmark.</Text>
         )}
         {history.map((item) => (
-          <Pressable key={item.poi.id} onPress={() => replay(item.poi)} style={styles.card}>
+          <Pressable key={item.poi.id} onPress={() => replay(item)} style={styles.card}>
             <Text style={styles.cardTitle}>{item.poi.name}</Text>
-            <Text style={styles.cardBody}>{item.poi.fact}</Text>
+            <Text style={styles.cardBody}>{item.spoken}</Text>
             <Text style={styles.cardMeta}>Tap to hear again</Text>
           </Pressable>
         ))}
@@ -132,7 +145,7 @@ export function WalkScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fafafa', paddingTop: 64, paddingHorizontal: 20 },
-  title: { fontSize: 28, fontWeight: '700', marginBottom: 20 },
+  title: { fontSize: 28, fontWeight: '700', marginBottom: 8 },
   button: { paddingVertical: 16, borderRadius: 12, alignItems: 'center' },
   buttonStart: { backgroundColor: '#1f6f43' },
   buttonStop: { backgroundColor: '#9b2c2c' },

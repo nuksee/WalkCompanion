@@ -1,0 +1,47 @@
+import type { PointOfInterest } from '../facts/types';
+
+/**
+ * Gemini via its OpenAI-compatible endpoint. Other providers only need a
+ * different base URL and model. Kept here, free of Expo imports, so this
+ * module stays unit-testable under Node.
+ */
+export const LLM_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/openai';
+export const LLM_MODEL = 'gemini-2.5-flash';
+
+const SYSTEM_PROMPT = `You are a friendly walking tour guide. Rewrite the source text about a place into
+1 to 3 spoken sentences that take under 20 seconds to say aloud. Use only facts present in the
+source text; never add details, dates, or names that are not there. Prefer history, architecture,
+and local culture over statistics. Plain prose, no lists, no markdown, no preamble.`;
+
+/** Builds the chat messages sent to the model. Pure, so it can be unit tested. */
+export function buildMessages(poi: PointOfInterest) {
+  return [
+    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'user', content: `Place: ${poi.name}\n\nSource text:\n${poi.fact}` },
+  ];
+}
+
+/** Pulls the assistant text out of an OpenAI-style chat completion, or null. */
+export function extractText(json: unknown): string | null {
+  const content = (json as { choices?: { message?: { content?: unknown } }[] })?.choices?.[0]
+    ?.message?.content;
+  return typeof content === 'string' && content.trim() ? content.trim() : null;
+}
+
+/**
+ * Asks the model to turn a raw extract into a short spoken fact.
+ * Falls back to the original text on any failure so narration never blocks.
+ */
+export async function rewriteFact(poi: PointOfInterest, apiKey: string): Promise<string> {
+  try {
+    const res = await fetch(`${LLM_BASE_URL}/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({ model: LLM_MODEL, messages: buildMessages(poi), temperature: 0.7 }),
+    });
+    if (!res.ok) return poi.fact;
+    return extractText(await res.json()) ?? poi.fact;
+  } catch {
+    return poi.fact;
+  }
+}

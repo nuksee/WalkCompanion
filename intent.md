@@ -28,7 +28,7 @@ A mobile app that acts as a personal tour guide. As I walk through a city, it no
 - **Platforms:** iOS and Android from one codebase.
 - **Framework:** React Native with Expo (TypeScript).
 - **Key device capabilities:** foreground and background location, text-to-speech, local notifications, local storage for cached city packs.
-- **Backend:** thin service that aggregates sources and calls an LLM to write facts. Keeps API keys off the device and allows caching per place.
+- **Backend:** none for the personal version. The user pastes their own LLM API key into the app (Gemini for now, via its OpenAI-compatible endpoint), stored in the device secure store. A thin aggregation service that holds keys and caches facts per place is deferred until a public release needs it.
 
 ## Fact delivery
 

@@ -32,6 +32,7 @@ Timing is hybrid: live generation when online, pre-downloaded city packs as the 
 - Do not repeat a fact about the same place within a single walk.
 - Rank candidate facts by proximity, source richness, and novelty. Priority order for content: history and architecture, then local tips and culture, then quirky trivia. Practical info (opening hours, ratings as content) is out of scope for v1.
 - Location is sent to the aggregation service only as the coordinates needed to fetch nearby places; no server-side location history in the personal version.
+- In the personal version the user supplies their own LLM API key; it stays in the device secure store and is only sent to the LLM provider. Never log it or write it anywhere else.
 
 ## Mobile app layout (`app/`)
 
@@ -40,6 +41,7 @@ Timing is hybrid: live generation when online, pre-downloaded city packs as the 
 - `src/facts/proximity.ts` holds the pure trigger logic (haversine distance, nearest untriggered POI within radius). Keep it free of React and Expo imports so it stays unit-testable under Node.
 - `src/facts/wikipedia.ts` queries Wikipedia's keyless geosearch API directly from the app and maps articles to `PointOfInterest` (`src/facts/types.ts`). `WalkScreen` refetches after moving ~300 m and merges results with `src/facts/torontoSeed.ts`, a few hand-written facts kept for testing. There is no backend yet; one is only needed once keyed sources (Google Maps, Reddit) or LLM generation arrive.
 - `src/speech/narrator.ts` wraps `expo-speech`; it resolves when speech finishes so the screen can serialise narration.
+- `src/llm/` is bring-your-own-key LLM rewriting. `settings.ts` stores the user's key in `expo-secure-store`. `rewriteFact.ts` fixes the provider (Gemini via its OpenAI-compatible endpoint; switching providers means changing `LLM_BASE_URL`/`LLM_MODEL`), turns a raw extract into 1-3 spoken sentences just before narration, and falls back to the raw text on any error. Keep it free of Expo imports so it stays testable under Node. With no key saved, raw Wikipedia text is narrated. `src/screens/SettingsPanel.tsx` is the key entry UI.
 - `app/AGENTS.md` (from the Expo template) points at the versioned Expo SDK 57 docs; check them before using an Expo API.
 
 ## Commands

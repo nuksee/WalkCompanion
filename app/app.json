@@ -12,7 +12,10 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "WalkCompanion uses your location to tell you about places around you as you walk.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "WalkCompanion uses your location in the background so narration continues while your phone is locked.",
-        "UIBackgroundModes": ["location", "audio"]
+        "UIBackgroundModes": [
+          "location",
+          "audio"
+        ]
       }
     },
     "android": {
@@ -40,7 +43,8 @@
           "isAndroidBackgroundLocationEnabled": true
         }
       ],
-      "expo-notifications"
+      "expo-notifications",
+      "expo-secure-store"
     ]
   }
 }
