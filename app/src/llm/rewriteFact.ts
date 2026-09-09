@@ -6,7 +6,7 @@ import type { PointOfInterest } from '../facts/types';
  * module stays unit-testable under Node.
  */
 export const LLM_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/openai';
-export const LLM_MODEL = 'gemini-2.5-flash';
+export const LLM_MODEL = 'gemini-3.6-flash';
 
 const SYSTEM_PROMPT = `You are a friendly walking tour guide. Rewrite the source text about a place into
 1 to 3 spoken sentences that take under 20 seconds to say aloud. Use only facts present in the
@@ -40,6 +40,9 @@ export async function rewriteFact(poi: PointOfInterest, apiKey: string): Promise
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({ model: LLM_MODEL, messages: buildMessages(poi), temperature: 0.7 }),
   });
-  if (!res.ok) throw new Error(`LLM HTTP ${res.status}`);
+  if (!res.ok) {
+    const body = (await res.text()).replace(/\s+/g, ' ').slice(0, 200);
+    throw new Error(`LLM HTTP ${res.status}: ${body}`);
+  }
   return extractText(await res.json());
 }

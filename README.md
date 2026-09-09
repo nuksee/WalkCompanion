@@ -32,6 +32,8 @@ npx expo start --tunnel
 
 Tap **Start walk**, allow location access, and head towards a landmark.
 
+To try it without leaving home, tap **Random fact**. It loads real Wikipedia places near you, or near the CN Tower if there is no GPS fix, and narrates one through the same path a real walk uses, including the AI rewrite if you have set a key.
+
 ## Development
 
 All commands run from `app/`.

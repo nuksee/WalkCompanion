@@ -37,7 +37,7 @@ Timing is hybrid: live generation when online, pre-downloaded city packs as the 
 
 ## Mobile app layout (`app/`)
 
-- `App.tsx` renders `src/screens/WalkScreen.tsx`, the single screen: start/stop walk, current position, list of facts heard.
+- `App.tsx` renders `src/screens/WalkScreen.tsx`, the single screen: start/stop walk, current position, list of facts heard. Its **Random fact** button exists for testing at home: it runs one loaded place through the same `speakFact` path as a real proximity trigger (LLM rewrite if a key is set, then speech and a history card), first fetching real Wikipedia places near the current fix or, with no fix, near the CN Tower. Keep triggers and Random fact on that shared path so home tests exercise the real pipeline.
 - `src/location/useWalkLocation.ts` requests foreground permission and streams positions tuned for walking pace. Background tracking is not implemented yet even though `app.json` already declares the permissions and background modes.
 - `src/facts/proximity.ts` holds the pure trigger logic (haversine distance, nearest untriggered POI within radius). Keep it free of React and Expo imports so it stays unit-testable under Node.
 - `src/facts/wikipedia.ts` queries Wikipedia's keyless geosearch API directly from the app and maps articles to `PointOfInterest` (`src/facts/types.ts`). `WalkScreen` refetches after moving ~300 m and merges results with `src/facts/torontoSeed.ts`, a few hand-written facts kept for testing. There is no backend yet; one is only needed once keyed sources (Google Maps, Reddit) or LLM generation arrive.

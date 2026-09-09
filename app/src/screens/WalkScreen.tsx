@@ -21,18 +21,69 @@ interface NarratedFact {
 /** Re-query Wikipedia after moving this far from the last query point. */
 const REFETCH_DISTANCE_M = 300;
 
+/** Used by "Random fact" when there is no GPS fix, so the feature works at home. */
+const HOME_TEST_COORD = { latitude: 43.6426, longitude: -79.3871 }; // CN Tower
+
 export function WalkScreen() {
   const [walking, setWalking] = useState(false);
   const { permission, position, error } = useWalkLocation(walking);
   const [history, setHistory] = useState<NarratedFact[]>([]);
   const [pois, setPois] = useState<PointOfInterest[]>(torontoSeed);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const narratedIds = useRef(new Set<string>());
   const speaking = useRef(false);
   const lastFetchAt = useRef<{ latitude: number; longitude: number } | null>(null);
   const apiKey = useRef<string | null>(null);
   const onKeyChange = useCallback((key: string | null) => {
     apiKey.current = key;
+  }, []);
+
+  /** Fetches Wikipedia places near a point and merges them into the loaded list. */
+  const loadNearby = useCallback(async (latitude: number, longitude: number) => {
+    log('wikipedia', 'fetching near', latitude.toFixed(4), longitude.toFixed(4));
+    try {
+      const found = await fetchNearbyWikipedia(latitude, longitude);
+      setFetchError(null);
+      setPois((current) => {
+        const known = new Set(current.map((p) => p.id));
+        const fresh = found.filter((p) => !known.has(p.id));
+        log('wikipedia', `${found.length} articles, ${fresh.length} new:`, fresh.map((p) => p.name));
+        return [...current, ...fresh];
+      });
+      return found;
+    } catch (e) {
+      logError('wikipedia', e);
+      setFetchError(e instanceof Error ? e.message : String(e));
+      return [];
+    }
+  }, []);
+
+  /** Rewrites (if a key is set), records, and speaks one fact. Shared by triggers and Random fact. */
+  const speakFact = useCallback(async (poi: PointOfInterest, why: string) => {
+    speaking.current = true;
+    narratedIds.current.add(poi.id);
+    const key = apiKey.current;
+    log('trigger', why, poi.name, key ? 'with LLM' : 'raw');
+    try {
+      let spoken = poi.fact;
+      if (key) {
+        try {
+          const text = await rewriteFact(poi, key);
+          if (text) spoken = text;
+          else log('llm', 'empty response, using raw text');
+        } catch (e) {
+          logError('llm', e);
+        }
+      }
+      log('narrate', spoken);
+      setHistory((h) => [{ poi, spoken, at: Date.now() }, ...h]);
+      await narrate(`${poi.name}. ${spoken}`);
+    } catch (e) {
+      logError('narrate', e);
+    } finally {
+      speaking.current = false;
+    }
   }, []);
 
   // Load nearby Wikipedia articles when the walk starts and after moving a few hundred metres.
@@ -47,58 +98,16 @@ export function WalkScreen() {
       return;
     }
     lastFetchAt.current = { latitude: position.latitude, longitude: position.longitude };
-    log('wikipedia', 'fetching near', position.latitude.toFixed(4), position.longitude.toFixed(4));
-    fetchNearbyWikipedia(position.latitude, position.longitude)
-      .then((found) => {
-        setFetchError(null);
-        setPois((current) => {
-          const known = new Set(current.map((p) => p.id));
-          const fresh = found.filter((p) => !known.has(p.id));
-          log('wikipedia', `${found.length} articles, ${fresh.length} new:`, fresh.map((p) => p.name));
-          return [...current, ...fresh];
-        });
-      })
-      .catch((e) => {
-        logError('wikipedia', e);
-        setFetchError(e instanceof Error ? e.message : String(e));
-      });
-  }, [walking, position]);
+    void loadNearby(position.latitude, position.longitude);
+  }, [walking, position, loadNearby]);
 
+  // Narrate the nearest untriggered place within range.
   useEffect(() => {
     if (!walking || !position || speaking.current) return;
-    const next = pickNextFact(
-      position.latitude,
-      position.longitude,
-      pois,
-      narratedIds.current,
-    );
+    const next = pickNextFact(position.latitude, position.longitude, pois, narratedIds.current);
     if (!next) return;
-    narratedIds.current.add(next.poi.id);
-    speaking.current = true;
-    const key = apiKey.current;
-    log('trigger', next.poi.name, `${Math.round(next.distance)}m away`, key ? 'with LLM' : 'raw');
-    const rewritten = key
-      ? rewriteFact(next.poi, key)
-          .then((text) => {
-            if (!text) log('llm', 'empty response, using raw text');
-            return text ?? next.poi.fact;
-          })
-          .catch((e) => {
-            logError('llm', e);
-            return next.poi.fact;
-          })
-      : Promise.resolve(next.poi.fact);
-    rewritten
-      .then((spoken) => {
-        log('narrate', spoken);
-        setHistory((h) => [{ poi: next.poi, spoken, at: Date.now() }, ...h]);
-        return narrate(`${next.poi.name}. ${spoken}`);
-      })
-      .catch((e) => logError('narrate', e))
-      .finally(() => {
-        speaking.current = false;
-      });
-  }, [walking, position, pois]);
+    void speakFact(next.poi, `${Math.round(next.distance)}m away`);
+  }, [walking, position, pois, speakFact]);
 
   const toggleWalk = () => {
     log('walk', walking ? 'stop' : 'start');
@@ -112,6 +121,27 @@ export function WalkScreen() {
     setWalking((w) => !w);
   };
 
+  /** Home testing: pick any loaded place, fetching real Wikipedia places first if none are loaded. */
+  const randomFact = async () => {
+    if (busy || speaking.current) return;
+    setBusy(true);
+    try {
+      let pool = pois;
+      const hasWikipedia = pool.some((p) => p.id.startsWith('wiki-'));
+      if (!hasWikipedia) {
+        const at = position ?? HOME_TEST_COORD;
+        const found = await loadNearby(at.latitude, at.longitude);
+        pool = [...pool, ...found];
+      }
+      const unheard = pool.filter((p) => !narratedIds.current.has(p.id));
+      const candidates = unheard.length ? unheard : pool;
+      const poi = candidates[Math.floor(Math.random() * candidates.length)];
+      if (poi) await speakFact(poi, 'random');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const replay = (item: NarratedFact) => {
     narrate(`${item.poi.name}. ${item.spoken}`).catch(() => undefined);
   };
@@ -122,12 +152,21 @@ export function WalkScreen() {
       <Text style={styles.title}>WalkCompanion</Text>
       <SettingsPanel onKeyChange={onKeyChange} />
 
-      <Pressable
-        onPress={toggleWalk}
-        style={[styles.button, walking ? styles.buttonStop : styles.buttonStart]}
-      >
-        <Text style={styles.buttonText}>{walking ? 'Stop walk' : 'Start walk'}</Text>
-      </Pressable>
+      <View style={styles.buttons}>
+        <Pressable
+          onPress={toggleWalk}
+          style={[styles.button, styles.buttonMain, walking ? styles.buttonStop : styles.buttonStart]}
+        >
+          <Text style={styles.buttonText}>{walking ? 'Stop walk' : 'Start walk'}</Text>
+        </Pressable>
+        <Pressable
+          onPress={randomFact}
+          disabled={busy}
+          style={[styles.button, styles.buttonSecondary, busy && styles.buttonDisabled]}
+        >
+          <Text style={styles.buttonSecondaryText}>{busy ? 'Loading...' : 'Random fact'}</Text>
+        </Pressable>
+      </View>
 
       <View style={styles.status}>
         {permission === 'denied' && (
@@ -145,15 +184,18 @@ export function WalkScreen() {
         {walking && !position && permission !== 'denied' && (
           <Text style={styles.muted}>Waiting for a GPS fix...</Text>
         )}
+        {!walking && <Text style={styles.muted}>{pois.length} places loaded</Text>}
       </View>
 
       <Text style={styles.sectionTitle}>Heard on this walk</Text>
       <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
         {history.length === 0 && (
-          <Text style={styles.muted}>Nothing yet. Walk towards a landmark.</Text>
+          <Text style={styles.muted}>
+            Nothing yet. Walk towards a landmark, or tap Random fact to test from home.
+          </Text>
         )}
         {history.map((item) => (
-          <Pressable key={item.poi.id} onPress={() => replay(item)} style={styles.card}>
+          <Pressable key={`${item.poi.id}-${item.at}`} onPress={() => replay(item)} style={styles.card}>
             <Text style={styles.cardTitle}>{item.poi.name}</Text>
             <Text style={styles.cardBody}>{item.spoken}</Text>
             <Text style={styles.cardMeta}>Tap to hear again</Text>
@@ -167,10 +209,15 @@ export function WalkScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fafafa', paddingTop: 64, paddingHorizontal: 20 },
   title: { fontSize: 28, fontWeight: '700', marginBottom: 8 },
-  button: { paddingVertical: 16, borderRadius: 12, alignItems: 'center' },
+  buttons: { flexDirection: 'row', gap: 10 },
+  button: { paddingVertical: 16, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  buttonMain: { flex: 2 },
   buttonStart: { backgroundColor: '#1f6f43' },
   buttonStop: { backgroundColor: '#9b2c2c' },
+  buttonSecondary: { flex: 1, backgroundColor: '#fff', borderWidth: 1, borderColor: '#1f5fa8' },
+  buttonDisabled: { opacity: 0.5 },
   buttonText: { color: '#fff', fontSize: 18, fontWeight: '600' },
+  buttonSecondaryText: { color: '#1f5fa8', fontSize: 15, fontWeight: '600' },
   status: { minHeight: 40, marginTop: 12, marginBottom: 8 },
   warn: { color: '#9b2c2c' },
   muted: { color: '#666' },
