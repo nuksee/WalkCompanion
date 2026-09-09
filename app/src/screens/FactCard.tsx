@@ -176,10 +176,10 @@ export function FactCard({ fact, kicker, speaking, rewritten, emptyText, onReact
         </View>
 
         <Animated.View style={[styles.stamp, styles.stampLike, { opacity: likeOpacity }]}>
-          <Text style={styles.stampLikeText}>MORE LIKE THIS</Text>
+          <Text style={styles.stampLikeGlyph}>♥</Text>
         </Animated.View>
         <Animated.View style={[styles.stamp, styles.stampDislike, { opacity: dislikeOpacity }]}>
-          <Text style={styles.stampDislikeText}>LESS OF THIS</Text>
+          <Text style={styles.stampDislikeGlyph}>✕</Text>
         </Animated.View>
       </Animated.View>
     </View>
@@ -236,18 +236,13 @@ const styles = StyleSheet.create({
   meta: { fontSize: 12, color: colors.neutral500, flexShrink: 1 },
   equaliser: { flexDirection: 'row', alignItems: 'flex-end', gap: 2, height: 14 },
   bar: { width: 3, height: 14, borderRadius: 2, backgroundColor: colors.accent },
-  stamp: {
-    position: 'absolute',
-    top: 16,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderWidth: 1.5,
-    borderRadius: 6,
-  },
-  stampLike: { left: 16, borderColor: colors.accent, transform: [{ rotate: '-8deg' }] },
-  stampDislike: { right: 16, borderColor: colors.neutral400, transform: [{ rotate: '8deg' }] },
-  stampLikeText: { fontSize: 12, letterSpacing: 0.96, color: colors.accent },
-  stampDislikeText: { fontSize: 12, letterSpacing: 0.96, color: colors.neutral300 },
+  // Swipe feedback: a bare glyph rather than a bordered stamp, so the drag
+  // reads at a glance without competing with the fact text.
+  stamp: { position: 'absolute', top: 14 },
+  stampLike: { left: 18 },
+  stampDislike: { right: 18 },
+  stampLikeGlyph: { fontSize: 38, lineHeight: 44, color: colors.accent },
+  stampDislikeGlyph: { fontSize: 34, lineHeight: 44, color: colors.neutral400 },
   empty: {
     flex: 1,
     borderRadius: radius.lg,
