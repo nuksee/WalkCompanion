@@ -7,6 +7,8 @@ import type { PointOfInterest } from '../facts/types';
  */
 export const LLM_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/openai';
 export const LLM_MODEL = 'gemini-3.6-flash';
+/** Per-attempt limit. A slow answer is worse than the raw text when someone is walking past. */
+const REQUEST_TIMEOUT_MS = 8_000;
 
 const SYSTEM_PROMPT = `You are a friendly walking tour guide. Rewrite the source text about a place into
 1 to 3 spoken sentences that take under 20 seconds to say aloud. Use only facts present in the
@@ -35,16 +37,25 @@ export function extractText(json: unknown): string | null {
  * stays importable under Node for tests.
  */
 export async function rewriteFact(poi: PointOfInterest, apiKey: string): Promise<string | null> {
-  const send = () =>
-    fetch(`${LLM_BASE_URL}/chat/completions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ model: LLM_MODEL, messages: buildMessages(poi), temperature: 0.7 }),
-    });
+  // AbortController rather than AbortSignal.timeout: the latter is missing in React Native.
+  const send = async () => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    try {
+      return await fetch(`${LLM_BASE_URL}/chat/completions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({ model: LLM_MODEL, messages: buildMessages(poi), temperature: 0.7 }),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+  };
   let res = await send();
   // Free-tier Gemini often returns a brief 503/429 under load; one retry covers most of them.
   if (res.status === 429 || res.status >= 500) {
-    await new Promise((r) => setTimeout(r, 1500));
+    await new Promise((r) => setTimeout(r, 1000));
     res = await send();
   }
   if (!res.ok) {
