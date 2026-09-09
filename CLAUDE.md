@@ -6,7 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 WalkCompanion is early-stage. Read `intent.md` first: it is the source of truth for scope, priorities, and non-goals. Update it when a product decision changes rather than letting code and intent drift apart.
 
-As of September 2026 the Expo app skeleton exists in `app/` (roadmap step 1). The aggregation service does not exist yet.
+Always keep the implementation simple and avoid over-engineering. Prefer the smallest working solution that satisfies the current requirement, and only add complexity when there is clear evidence it is necessary.
+
+If a code change meaningfully affects behavior, constraints, setup, or how contributors work, update the relevant docs at the same time.
+
+As of September 2026 the Expo app in `app/` covers roadmap steps 1 and 2: location, speech, proximity triggers, and live Wikipedia facts. Keep things simple; do not add a backend or new dependencies until a step actually needs them.
 
 ## What we are building
 
@@ -34,7 +38,7 @@ Timing is hybrid: live generation when online, pre-downloaded city packs as the 
 - `App.tsx` renders `src/screens/WalkScreen.tsx`, the single screen: start/stop walk, current position, list of facts heard.
 - `src/location/useWalkLocation.ts` requests foreground permission and streams positions tuned for walking pace. Background tracking is not implemented yet even though `app.json` already declares the permissions and background modes.
 - `src/facts/proximity.ts` holds the pure trigger logic (haversine distance, nearest untriggered POI within radius). Keep it free of React and Expo imports so it stays unit-testable under Node.
-- `src/facts/torontoSeed.ts` is a hand-written stand-in for the aggregation service. `PointOfInterest` in `src/facts/types.ts` is the contract the service will eventually return.
+- `src/facts/wikipedia.ts` queries Wikipedia's keyless geosearch API directly from the app and maps articles to `PointOfInterest` (`src/facts/types.ts`). `WalkScreen` refetches after moving ~300 m and merges results with `src/facts/torontoSeed.ts`, a few hand-written facts kept for testing. There is no backend yet; one is only needed once keyed sources (Google Maps, Reddit) or LLM generation arrive.
 - `src/speech/narrator.ts` wraps `expo-speech`; it resolves when speech finishes so the screen can serialise narration.
 - `app/AGENTS.md` (from the Expo template) points at the versioned Expo SDK 57 docs; check them before using an Expo API.
 
@@ -51,7 +55,7 @@ npm test               # node --test over src/**/*.test.ts (uses --experimental-
 node --experimental-strip-types --test src/facts/proximity.test.ts   # single test file
 ```
 
-Tests use Node's built-in runner, so test files import with explicit `.ts` extensions and must not import React Native or Expo modules. There is no linter configured.
+Tests use Node's built-in runner, so test files import with explicit `.ts` extensions and must not import React Native or Expo modules. They are excluded from `tsc` in `tsconfig.json`. There is no linter configured.
 
 ## Open questions to resolve before building the relevant piece
 
