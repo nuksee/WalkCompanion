@@ -8,7 +8,7 @@ import type { PointOfInterest } from '../facts/types';
 import { fetchNearbyWikipedia } from '../facts/wikipedia';
 import { rewriteFact } from '../llm/rewriteFact';
 import { log, logError } from '../log';
-import { narrate, stopNarration } from '../speech/narrator';
+import { currentVoice, narrate, stopNarration } from '../speech/narrator';
 import { SettingsPanel } from './SettingsPanel';
 
 interface NarratedFact {
@@ -80,10 +80,10 @@ export function WalkScreen() {
     }
     log('narrate', spoken);
     setHistory((h) => [{ poi, spoken, at: Date.now() }, ...h]);
-    narrate(`${poi.name}. ${spoken}`)
+    narrate(`${poi.name}. ${spoken}`, key)
       .catch((e) => logError('narrate', e))
       .finally(() => {
-        log('narrate', 'done');
+        log('narrate', 'done, voice:', currentVoice());
         speaking.current = false;
       });
   }, []);
@@ -149,7 +149,7 @@ export function WalkScreen() {
   };
 
   const replay = (item: NarratedFact) => {
-    narrate(`${item.poi.name}. ${item.spoken}`).catch(() => undefined);
+    narrate(`${item.poi.name}. ${item.spoken}`, apiKey.current).catch((e) => logError('narrate', e));
   };
 
   return (

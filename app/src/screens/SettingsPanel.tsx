@@ -43,8 +43,9 @@ export function SettingsPanel({ onKeyChange }: Props) {
         <View style={styles.panel}>
           <Text style={styles.label}>Gemini API key</Text>
           <Text style={styles.help}>
-            Facts are rewritten by {LLM_MODEL} into short spoken sentences. Leave empty to
-            hear the raw Wikipedia text. The key never leaves this device except to call the API.
+            With a key, facts are rewritten by {LLM_MODEL} into short spoken sentences and read
+            by a natural Gemini voice. Without one you hear raw Wikipedia text in the phone's own
+            voice. The key never leaves this device except to call Google's API.
           </Text>
           <TextInput
             style={styles.input}

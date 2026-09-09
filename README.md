@@ -10,7 +10,7 @@ Personal learning project, currently being tested in Toronto. iOS and Android vi
 - Pulls nearby geotagged Wikipedia articles as you move and turns each into a two-sentence fact.
 - Speaks a fact aloud when you come within about 120 metres of a place, never repeating one on the same walk.
 - Lists everything heard on the walk, with tap to replay.
-- Optionally rewrites each fact into short, natural spoken sentences using your own Gemini API key. Open **Settings** in the app to paste a key. It is stored in the phone's secure storage and only sent to Google's API. Without a key you hear the raw Wikipedia text.
+- Optionally, with your own Gemini API key, rewrites each fact into short natural sentences and reads it in a natural Gemini voice instead of the phone's robotic one. Open **Settings** in the app to paste a key. It is stored in the phone's secure storage and only sent to Google's API. Without a key you hear the raw Wikipedia text in the phone's own voice, which is also the fallback when Gemini is unavailable.
 
 Planned next: choosing the kinds of facts you want (History, Fun fact, Pop culture, Hidden gem, and so on) and liking or disliking facts to tune what comes next, then background tracking with the phone locked, local notifications, more sources, and offline city packs. See [intent.md](intent.md) for the full vision and roadmap.
 

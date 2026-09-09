@@ -45,7 +45,14 @@ export async function rewriteFact(poi: PointOfInterest, apiKey: string): Promise
       return await fetch(`${LLM_BASE_URL}/chat/completions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ model: LLM_MODEL, messages: buildMessages(poi), temperature: 0.7 }),
+        // reasoning_effort "low" limits the model's hidden thinking; a two-sentence
+        // rewrite does not need it and it was pushing responses past the timeout.
+        body: JSON.stringify({
+          model: LLM_MODEL,
+          messages: buildMessages(poi),
+          temperature: 0.7,
+          reasoning_effort: 'low',
+        }),
         signal: controller.signal,
       });
     } finally {

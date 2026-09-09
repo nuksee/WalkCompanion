@@ -32,7 +32,7 @@ A mobile app that acts as a personal tour guide. As I walk through a city, it no
 
 ## Fact delivery
 
-- **Audio narration (primary):** text-to-speech reads a fact aloud when I approach a point of interest. Should pause or lower for phone calls and other audio.
+- **Audio narration (primary):** a fact is read aloud when I approach a point of interest. Device text-to-speech proved too robotic, so with the user's Gemini key the app uses Gemini speech synthesis for a natural voice and keeps the device engine as the offline or error fallback. Should pause or lower for phone calls and other audio.
 - **Push / local notifications (secondary):** short alert with a one-line hook when audio is off or the screen is locked; tapping opens the full fact.
 - **On-screen:** simple map or list showing recent and nearby facts, mainly as a fallback and for review afterwards.
 
