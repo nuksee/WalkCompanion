@@ -89,8 +89,8 @@ Practical info such as opening hours is out of scope for the first version.
 
 ## Rough roadmap
 
-1. Expo app skeleton with location tracking and text-to-speech.
-2. Aggregation service pulling Wikipedia and OpenStreetMap for a coordinate.
+1. ~~Expo app skeleton with location tracking and text-to-speech.~~ Done.
+2. ~~Wikipedia facts for a coordinate.~~ Done, called directly from the app; no backend yet. OpenStreetMap deferred until needed.
 3. LLM fact generation with source grounding.
 4. Proximity triggers and notifications, tested on Toronto walks.
 5. Add Reddit and Google Maps as ranking and colour sources.

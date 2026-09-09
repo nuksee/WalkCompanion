@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useWalkLocation } from '../location/useWalkLocation';
-import { pickNextFact } from '../facts/proximity';
+import { distanceMeters, pickNextFact } from '../facts/proximity';
 import { torontoSeed } from '../facts/torontoSeed';
 import type { PointOfInterest } from '../facts/types';
+import { fetchNearbyWikipedia } from '../facts/wikipedia';
 import { narrate, stopNarration } from '../speech/narrator';
 
 interface NarratedFact {
@@ -12,19 +13,48 @@ interface NarratedFact {
   at: number;
 }
 
+/** Re-query Wikipedia after moving this far from the last query point. */
+const REFETCH_DISTANCE_M = 300;
+
 export function WalkScreen() {
   const [walking, setWalking] = useState(false);
   const { permission, position, error } = useWalkLocation(walking);
   const [history, setHistory] = useState<NarratedFact[]>([]);
+  const [pois, setPois] = useState<PointOfInterest[]>(torontoSeed);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const narratedIds = useRef(new Set<string>());
   const speaking = useRef(false);
+  const lastFetchAt = useRef<{ latitude: number; longitude: number } | null>(null);
+
+  // Load nearby Wikipedia articles when the walk starts and after moving a few hundred metres.
+  useEffect(() => {
+    if (!walking || !position) return;
+    const last = lastFetchAt.current;
+    if (
+      last &&
+      distanceMeters(last.latitude, last.longitude, position.latitude, position.longitude) <
+        REFETCH_DISTANCE_M
+    ) {
+      return;
+    }
+    lastFetchAt.current = { latitude: position.latitude, longitude: position.longitude };
+    fetchNearbyWikipedia(position.latitude, position.longitude)
+      .then((found) => {
+        setFetchError(null);
+        setPois((current) => {
+          const known = new Set(current.map((p) => p.id));
+          return [...current, ...found.filter((p) => !known.has(p.id))];
+        });
+      })
+      .catch((e) => setFetchError(e instanceof Error ? e.message : String(e)));
+  }, [walking, position]);
 
   useEffect(() => {
     if (!walking || !position || speaking.current) return;
     const next = pickNextFact(
       position.latitude,
       position.longitude,
-      torontoSeed,
+      pois,
       narratedIds.current,
     );
     if (!next) return;
@@ -36,7 +66,7 @@ export function WalkScreen() {
       .finally(() => {
         speaking.current = false;
       });
-  }, [walking, position]);
+  }, [walking, position, pois]);
 
   const toggleWalk = () => {
     if (walking) {
@@ -44,6 +74,7 @@ export function WalkScreen() {
       speaking.current = false;
     } else {
       narratedIds.current.clear();
+      lastFetchAt.current = null;
     }
     setWalking((w) => !w);
   };
@@ -69,10 +100,12 @@ export function WalkScreen() {
           <Text style={styles.warn}>Location permission denied. Enable it in Settings.</Text>
         )}
         {error && <Text style={styles.warn}>{error}</Text>}
+        {fetchError && <Text style={styles.warn}>Wikipedia lookup failed: {fetchError}</Text>}
         {walking && position && (
           <Text style={styles.muted}>
             {position.latitude.toFixed(5)}, {position.longitude.toFixed(5)}
             {position.accuracy != null ? `  ±${Math.round(position.accuracy)} m` : ''}
+            {`  ·  ${pois.length} places loaded`}
           </Text>
         )}
         {walking && !position && permission !== 'denied' && (
