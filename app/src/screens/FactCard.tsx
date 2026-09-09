@@ -99,6 +99,9 @@ export function FactCard({ fact, kicker, speaking, rewritten, emptyText, onReact
     return () => loop.stop();
   }, [speaking, glow]);
 
+  // The springs below stay on the JS driver on purpose: this card also animates
+  // borderColor and shadow (JS-only props) on the same view, and React Native
+  // cannot mix native- and JS-driven values on one node.
   const pan = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > 6 && Math.abs(g.dx) > Math.abs(g.dy),
@@ -110,10 +113,10 @@ export function FactCard({ fact, kicker, speaking, rewritten, emptyText, onReact
         } else if (Math.abs(g.dx) < TAP_PX && Math.abs(g.dy) < TAP_PX) {
           onPressRef.current();
         }
-        Animated.spring(dragX, { toValue: 0, useNativeDriver: true, bounciness: 6, speed: 14 }).start();
+        Animated.spring(dragX, { toValue: 0, useNativeDriver: false, bounciness: 6, speed: 14 }).start();
       },
       onPanResponderTerminate: () => {
-        Animated.spring(dragX, { toValue: 0, useNativeDriver: true }).start();
+        Animated.spring(dragX, { toValue: 0, useNativeDriver: false }).start();
       },
     }),
   ).current;
