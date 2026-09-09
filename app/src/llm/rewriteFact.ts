@@ -1,4 +1,12 @@
-import type { PointOfInterest } from '../facts/types';
+import type { FactTag, PointOfInterest } from '../facts/types';
+
+/** What the user has asked to hear, so the prompt can lean that way. */
+export interface Steering {
+  /** The tag this fact should be written towards. */
+  tag?: FactTag;
+  /** Compact like/dislike summary; see summariseFeedback. */
+  feedback?: string | null;
+}
 
 /**
  * Gemini via its OpenAI-compatible endpoint. Other providers only need a
@@ -16,10 +24,16 @@ source text; never add details, dates, or names that are not there. Prefer histo
 and local culture over statistics. Plain prose, no lists, no markdown, no preamble.`;
 
 /** Builds the chat messages sent to the model. Pure, so it can be unit tested. */
-export function buildMessages(poi: PointOfInterest) {
+export function buildMessages(poi: PointOfInterest, steering: Steering = {}) {
+  const hints = [
+    steering.tag &&
+      `Angle: the listener wants "${steering.tag}" content; lean that way if the source supports it.`,
+    steering.feedback && `Listener feedback so far: ${steering.feedback}`,
+  ].filter(Boolean);
+  const user = [`Place: ${poi.name}`, ...hints, `Source text:\n${poi.fact}`].join('\n\n');
   return [
     { role: 'system', content: SYSTEM_PROMPT },
-    { role: 'user', content: `Place: ${poi.name}\n\nSource text:\n${poi.fact}` },
+    { role: 'user', content: user },
   ];
 }
 
@@ -36,7 +50,11 @@ export function extractText(json: unknown): string | null {
  * the caller decides how to fall back. No logging here so the module
  * stays importable under Node for tests.
  */
-export async function rewriteFact(poi: PointOfInterest, apiKey: string): Promise<string | null> {
+export async function rewriteFact(
+  poi: PointOfInterest,
+  apiKey: string,
+  steering: Steering = {},
+): Promise<string | null> {
   // AbortController rather than AbortSignal.timeout: the latter is missing in React Native.
   const send = async () => {
     const controller = new AbortController();
@@ -49,7 +67,7 @@ export async function rewriteFact(poi: PointOfInterest, apiKey: string): Promise
         // rewrite does not need it and it was pushing responses past the timeout.
         body: JSON.stringify({
           model: LLM_MODEL,
-          messages: buildMessages(poi),
+          messages: buildMessages(poi, steering),
           temperature: 0.7,
           reasoning_effort: 'low',
         }),

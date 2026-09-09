@@ -104,7 +104,7 @@ Where preferences and feedback live: the device is the source of truth for now, 
 1. ~~Expo app skeleton with location tracking and text-to-speech.~~ Done.
 2. ~~Wikipedia facts for a coordinate.~~ Done, called directly from the app; no backend yet. OpenStreetMap deferred until needed.
 3. ~~LLM fact generation with source grounding.~~ Done as bring-your-own Gemini key rewriting Wikipedia extracts.
-4. Personalisation: tag preferences and like/dislike on fact cards, with tags attached to every fact.
+4. ~~Personalisation: tag preferences and like/dislike on fact cards, with tags attached to every fact.~~ Done on the device: tags picked in a Tune sheet and persisted, reactions by swipe or button, both steering ranking and the LLM prompt. Nothing is stored off the device.
 5. Background location and notifications so narration continues with the phone locked, tested on Toronto walks.
 6. Add Reddit and Google Maps as ranking and colour sources.
 7. City pack download and offline mode.

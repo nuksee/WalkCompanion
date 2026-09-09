@@ -24,7 +24,7 @@ export function toPointOfInterest(page: WikiPage): PointOfInterest | null {
     latitude: coord.lat,
     longitude: coord.lon,
     radiusMeters: TRIGGER_RADIUS_M,
-    category: 'history',
+    tags: ['History'],
     fact: text,
     sources: [`https://en.wikipedia.org/?curid=${page.pageid}`],
   };
