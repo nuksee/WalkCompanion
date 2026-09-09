@@ -6,7 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useWalkLocation, type WalkPosition } from '../location/useWalkLocation';
 import { loadTags, saveTags } from '../facts/preferenceStore';
 import { DEFAULT_TAGS, summariseFeedback, type Reaction } from '../facts/preferences';
-import { buildDemoRoute, positionAlongRoute, WALK_SPEED_MPS } from '../facts/demoRoute';
+import { buildDemoRoute, positionAlongRoute, WALK_SPEED_MPS, type Coord } from '../facts/demoRoute';
 import { distanceMeters, nextUpcoming, pickNextFact } from '../facts/proximity';
 import { torontoSeed } from '../facts/torontoSeed';
 import { displayTag, type FactTag, type PointOfInterest } from '../facts/types';
@@ -14,6 +14,7 @@ import { fetchNearbyWikipedia } from '../facts/wikipedia';
 import { rewriteFact } from '../llm/rewriteFact';
 import { log, logError } from '../log';
 import { currentVoice, narrate, stopNarration } from '../speech/narrator';
+import { DemoMapSheet } from './DemoMapSheet';
 import { FactCard, type HeroFact } from './FactCard';
 import { SettingsPanel } from './SettingsPanel';
 import { TuneSheet } from './TuneSheet';
@@ -56,6 +57,9 @@ export function WalkScreen() {
   const [walking, setWalking] = useState(false);
   const [demoSpeed, setDemoSpeed] = useState(0);
   const [demoPosition, setDemoPosition] = useState<WalkPosition | null>(null);
+  /** Set when the user taps the coordinates and picks a spot on the map. */
+  const [demoOrigin, setDemoOrigin] = useState<Coord | null>(null);
+  const [demoMapOpen, setDemoMapOpen] = useState(false);
   const { permission, position: realPosition, error } = useWalkLocation(walking);
   // Demo mode replaces the GPS fix everywhere downstream; nothing else changes.
   const position = demoSpeed > 0 && demoPosition ? demoPosition : realPosition;
@@ -171,7 +175,7 @@ export function WalkScreen() {
       setDemoPosition(null);
       return;
     }
-    const origin = realPositionRef.current ?? HOME_TEST_COORD;
+    const origin = demoOrigin ?? realPositionRef.current ?? HOME_TEST_COORD;
     const route = buildDemoRoute(origin);
     log('demo', `${demoSpeed}x from`, origin.latitude.toFixed(4), origin.longitude.toFixed(4));
     let travelled = 0;
@@ -183,7 +187,7 @@ export function WalkScreen() {
     advance();
     const timer = setInterval(advance, DEMO_TICK_MS);
     return () => clearInterval(timer);
-  }, [walking, demoSpeed]);
+  }, [walking, demoSpeed, demoOrigin]);
 
   // Load nearby Wikipedia articles when the walk starts and after moving a few hundred metres.
   useEffect(() => {
@@ -255,11 +259,21 @@ export function WalkScreen() {
     }
   };
 
+  /** Demo mode: restart the simulated loop around a spot picked on the map. */
+  const moveDemo = (coord: Coord) => {
+    log('demo', 'moved to', coord.latitude.toFixed(4), coord.longitude.toFixed(4));
+    setDemoMapOpen(false);
+    // Force a Wikipedia lookup at the new spot even if it is within the refetch radius.
+    lastFetchAt.current = null;
+    setDemoOrigin(coord);
+  };
+
   /** Long-press on "Random fact" cycles demo mode: off, 1x, 5x, 20x. */
   const cycleDemo = () => {
     setDemoSpeed((current) => {
       const next = DEMO_SPEEDS[(DEMO_SPEEDS.indexOf(current) + 1) % DEMO_SPEEDS.length]!;
       log('demo', next === 0 ? 'off' : `${next}x simulated walk`);
+      if (next === 0) setDemoOrigin(null);
       return next;
     });
   };
@@ -339,6 +353,9 @@ export function WalkScreen() {
     dotColor = colors.accent700;
   }
 
+  // Tapping the coordinates opens the map picker, but only while the demo is running.
+  const demoing = walking && demoSpeed > 0;
+
   const earlier = history.filter((h) => !shown || keyOf(h) !== keyOf(shown));
 
   return (
@@ -356,12 +373,16 @@ export function WalkScreen() {
           </Pressable>
         </View>
 
-        <View style={styles.statusRow}>
+        <Pressable
+          onPress={() => demoing && setDemoMapOpen(true)}
+          disabled={!demoing}
+          style={styles.statusRow}
+        >
           <View style={[styles.dot, { backgroundColor: dotColor }]} />
           <Text style={styles.statusText} numberOfLines={1}>
             {status}
           </Text>
-        </View>
+        </Pressable>
 
         <FactCard
           fact={hero}
@@ -440,6 +461,12 @@ export function WalkScreen() {
         selected={tags}
         onToggle={toggleTag}
         onClose={() => setTuneOpen(false)}
+      />
+      <DemoMapSheet
+        visible={demoMapOpen}
+        at={position ?? demoOrigin ?? HOME_TEST_COORD}
+        onPick={moveDemo}
+        onClose={() => setDemoMapOpen(false)}
       />
       <SettingsPanel
         visible={settingsOpen}
