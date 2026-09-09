@@ -208,7 +208,7 @@ export function FactCard({ fact, kicker, speaking, rewritten, emptyText, onReact
           <Text style={styles.stampLikeGlyph}>♥</Text>
         </Animated.View>
         <Animated.View pointerEvents="none" style={[styles.stamp, { opacity: dislikeOpacity }]}>
-          <Text style={styles.stampDislikeGlyph}>✕</Text>
+          <Text style={styles.stampDislikeGlyph}>✖</Text>
         </Animated.View>
       </Animated.View>
     </View>
@@ -278,7 +278,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stampLikeGlyph: { fontSize: 76, lineHeight: 88, color: colors.accent },
-  stampDislikeGlyph: { fontSize: 68, lineHeight: 88, color: colors.neutral400 },
+  // Heavy glyph in near-white: the thin grey cross vanished at half opacity on the dark card.
+  stampDislikeGlyph: { fontSize: 72, lineHeight: 88, color: colors.neutral100, fontWeight: '700' },
   empty: {
     flex: 1,
     borderRadius: radius.lg,
