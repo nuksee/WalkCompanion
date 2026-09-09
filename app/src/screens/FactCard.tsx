@@ -9,6 +9,8 @@ const CARD_HEIGHT = 292;
 const COMMIT_PX = 90;
 /** Stamps reach full opacity at this drag distance. */
 const STAMP_PX = 80;
+/** Movement under this counts as a tap, not a drag. */
+const TAP_PX = 6;
 
 export interface HeroFact {
   key: string;
@@ -29,6 +31,8 @@ interface Props {
   rewritten: boolean;
   emptyText: string;
   onReact: (reaction: Reaction) => void;
+  /** Tap the card to hear the fact again. */
+  onPress: () => void;
 }
 
 /** Four bars that pulse while narration plays. */
@@ -67,7 +71,7 @@ function Equaliser({ visible }: { visible: boolean }) {
  * Drag right to like, left to dislike; release past 90 px commits, otherwise
  * the card springs back. A committed reaction keeps its stamp visible.
  */
-export function FactCard({ fact, kicker, speaking, rewritten, emptyText, onReact }: Props) {
+export function FactCard({ fact, kicker, speaking, rewritten, emptyText, onReact, onPress }: Props) {
   const dragX = useRef(new Animated.Value(0)).current;
   const glow = useRef(new Animated.Value(0)).current;
   // PanResponder is created once, so it reads the live values through refs.
@@ -75,6 +79,8 @@ export function FactCard({ fact, kicker, speaking, rewritten, emptyText, onReact
   factRef.current = fact;
   const onReactRef = useRef(onReact);
   onReactRef.current = onReact;
+  const onPressRef = useRef(onPress);
+  onPressRef.current = onPress;
 
   // While speaking the card pulses: an animated shadow on iOS, an animated
   // border colour on Android, which has no coloured elevation.
@@ -97,9 +103,12 @@ export function FactCard({ fact, kicker, speaking, rewritten, emptyText, onReact
     PanResponder.create({
       onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > 6 && Math.abs(g.dx) > Math.abs(g.dy),
       onPanResponderMove: (_e, g) => dragX.setValue(g.dx),
+      onStartShouldSetPanResponder: () => true,
       onPanResponderRelease: (_e, g) => {
         if (factRef.current && Math.abs(g.dx) > COMMIT_PX) {
           onReactRef.current(g.dx > 0 ? 'like' : 'dislike');
+        } else if (Math.abs(g.dx) < TAP_PX && Math.abs(g.dy) < TAP_PX) {
+          onPressRef.current();
         }
         Animated.spring(dragX, { toValue: 0, useNativeDriver: true, bounciness: 6, speed: 14 }).start();
       },
@@ -161,7 +170,7 @@ export function FactCard({ fact, kicker, speaking, rewritten, emptyText, onReact
         <Text style={styles.body}>{fact.spoken}</Text>
         <View style={styles.cardFoot}>
           <Text style={styles.meta} numberOfLines={1}>
-            {rewritten ? 'Rewritten by Gemini' : 'Wikipedia'} · {fact.why}
+            {rewritten ? 'Rewritten by Gemini' : 'Wikipedia'} · {fact.why} · tap to hear again
           </Text>
           <Equaliser visible={speaking} />
         </View>

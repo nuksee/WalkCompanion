@@ -321,56 +321,8 @@ export function WalkScreen() {
           rewritten={hasKey}
           emptyText={emptyText}
           onReact={(reaction) => shown && react(shown, reaction)}
+          onPress={replay}
         />
-
-        <View style={styles.reactionRow}>
-          <Pressable
-            onPress={() => shown && react(shown, 'dislike')}
-            disabled={!shown}
-            accessibilityLabel="Less of this"
-            style={({ pressed }) => [
-              styles.circle,
-              styles.circleNeutral,
-              !shown && styles.disabled,
-              pressed && styles.circleNeutralPressed,
-            ]}
-          >
-            <Text style={styles.circleGlyph}>✕</Text>
-          </Pressable>
-          <Pressable
-            onPress={replay}
-            disabled={!shown}
-            accessibilityLabel="Hear again"
-            style={({ pressed }) => [
-              styles.circle,
-              styles.circleAccent,
-              !shown && styles.disabled,
-              pressed && styles.circleAccentPressed,
-            ]}
-          >
-            <Text style={styles.circleGlyphAccent}>▶</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => shown && react(shown, 'like')}
-            disabled={!shown}
-            accessibilityLabel="More like this"
-            style={({ pressed }) => [
-              styles.circle,
-              styles.circleNeutral,
-              !shown && styles.disabled,
-              pressed && styles.circleNeutralPressed,
-            ]}
-          >
-            <Text
-              style={[
-                styles.circleGlyph,
-                hero?.reaction === 'like' && { color: colors.accent },
-              ]}
-            >
-              ♥
-            </Text>
-          </Pressable>
-        </View>
 
         <View style={styles.actionRow}>
           <Pressable
@@ -459,20 +411,6 @@ const styles = StyleSheet.create({
   statusRow: { height: 24, flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
   dot: { width: 6, height: 6, borderRadius: 3 },
   statusText: { fontSize: 12, color: colors.neutral500, flex: 1 },
-  reactionRow: {
-    height: 44,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 16,
-    marginTop: 14,
-  },
-  circle: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  circleNeutral: { borderColor: colors.divider },
-  circleNeutralPressed: { backgroundColor: colors.neutralPress },
-  circleAccent: { borderColor: colors.accent },
-  circleAccentPressed: { backgroundColor: colors.accentPress },
-  circleGlyph: { fontSize: 18, color: colors.text },
-  circleGlyphAccent: { fontSize: 16, color: colors.accent },
   disabled: { opacity: 0.35 },
   actionRow: { flexDirection: 'row', gap: 8, marginTop: 16 },
   mainButton: {
