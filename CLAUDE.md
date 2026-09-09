@@ -48,6 +48,7 @@ Run from `app/`.
 
 ```bash
 npm start              # Expo dev server; scan the QR code with Expo Go
+npx expo start --tunnel   # use on corporate/Public Wi-Fi where the phone cannot reach port 8081 (needs @expo/ngrok dev dep, installed)
 npm run android        # start and open on a connected Android device/emulator
 npm run ios            # macOS only
 npm run typecheck      # tsc --noEmit

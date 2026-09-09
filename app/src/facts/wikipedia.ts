@@ -2,6 +2,9 @@ import type { PointOfInterest } from './types';
 
 const API = 'https://en.wikipedia.org/w/api.php';
 const TRIGGER_RADIUS_M = 120;
+/** Wikimedia rejects generic user agents with 403; identify the app per their API policy. */
+const USER_AGENT =
+  'WalkCompanion/0.1 (personal walking-tour app; https://github.com/nuksee/WalkCompanion)';
 
 interface WikiPage {
   pageid: number;
@@ -47,7 +50,9 @@ export async function fetchNearbyWikipedia(
     exsentences: '2',
     exlimit: '20',
   });
-  const res = await fetch(`${API}?${params}`);
+  const res = await fetch(`${API}?${params}`, {
+    headers: { 'User-Agent': USER_AGENT, 'Api-User-Agent': USER_AGENT },
+  });
   if (!res.ok) throw new Error(`Wikipedia ${res.status}`);
   const json = (await res.json()) as { query?: { pages?: Record<string, WikiPage> } };
   const pages = Object.values(json.query?.pages ?? {});
