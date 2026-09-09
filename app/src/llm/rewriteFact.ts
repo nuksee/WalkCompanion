@@ -35,11 +35,18 @@ export function extractText(json: unknown): string | null {
  * stays importable under Node for tests.
  */
 export async function rewriteFact(poi: PointOfInterest, apiKey: string): Promise<string | null> {
-  const res = await fetch(`${LLM_BASE_URL}/chat/completions`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({ model: LLM_MODEL, messages: buildMessages(poi), temperature: 0.7 }),
-  });
+  const send = () =>
+    fetch(`${LLM_BASE_URL}/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({ model: LLM_MODEL, messages: buildMessages(poi), temperature: 0.7 }),
+    });
+  let res = await send();
+  // Free-tier Gemini often returns a brief 503/429 under load; one retry covers most of them.
+  if (res.status === 429 || res.status >= 500) {
+    await new Promise((r) => setTimeout(r, 1500));
+    res = await send();
+  }
   if (!res.ok) {
     const body = (await res.text()).replace(/\s+/g, ' ').slice(0, 200);
     throw new Error(`LLM HTTP ${res.status}: ${body}`);

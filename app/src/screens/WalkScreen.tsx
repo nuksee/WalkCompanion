@@ -59,31 +59,33 @@ export function WalkScreen() {
     }
   }, []);
 
-  /** Rewrites (if a key is set), records, and speaks one fact. Shared by triggers and Random fact. */
+  /**
+   * Rewrites (if a key is set), records, and speaks one fact. Shared by triggers and Random fact.
+   * Resolves when narration starts; `speaking` stays set until the speech engine finishes.
+   */
   const speakFact = useCallback(async (poi: PointOfInterest, why: string) => {
     speaking.current = true;
     narratedIds.current.add(poi.id);
     const key = apiKey.current;
     log('trigger', why, poi.name, key ? 'with LLM' : 'raw');
-    try {
-      let spoken = poi.fact;
-      if (key) {
-        try {
-          const text = await rewriteFact(poi, key);
-          if (text) spoken = text;
-          else log('llm', 'empty response, using raw text');
-        } catch (e) {
-          logError('llm', e);
-        }
+    let spoken = poi.fact;
+    if (key) {
+      try {
+        const text = await rewriteFact(poi, key);
+        if (text) spoken = text;
+        else log('llm', 'empty response, using raw text');
+      } catch (e) {
+        logError('llm', e);
       }
-      log('narrate', spoken);
-      setHistory((h) => [{ poi, spoken, at: Date.now() }, ...h]);
-      await narrate(`${poi.name}. ${spoken}`);
-    } catch (e) {
-      logError('narrate', e);
-    } finally {
-      speaking.current = false;
     }
+    log('narrate', spoken);
+    setHistory((h) => [{ poi, spoken, at: Date.now() }, ...h]);
+    narrate(`${poi.name}. ${spoken}`)
+      .catch((e) => logError('narrate', e))
+      .finally(() => {
+        log('narrate', 'done');
+        speaking.current = false;
+      });
   }, []);
 
   // Load nearby Wikipedia articles when the walk starts and after moving a few hundred metres.
@@ -123,7 +125,11 @@ export function WalkScreen() {
 
   /** Home testing: pick any loaded place, fetching real Wikipedia places first if none are loaded. */
   const randomFact = async () => {
-    if (busy || speaking.current) return;
+    if (busy) return;
+    if (speaking.current) {
+      log('walk', 'random fact ignored: still speaking');
+      return;
+    }
     setBusy(true);
     try {
       let pool = pois;
