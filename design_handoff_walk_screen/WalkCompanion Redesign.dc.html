@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/nocturne-6735e6c0-03b6-40db-8d21-515e7011b08b/styles.css">
+<script src="_ds/nocturne-6735e6c0-03b6-40db-8d21-515e7011b08b/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:#161826;color:#e9e9ed;font-family:Inter,system-ui,sans-serif}
+a{color:#9184d9} a:hover{color:#b5abfc}
+@keyframes wc-pulse{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
+@keyframes wc-glow{0%,100%{box-shadow:0 0 0 1px #9184d9,0 0 18px rgba(145,132,217,.25)}50%{box-shadow:0 0 0 1px #b5abfc,0 0 40px rgba(145,132,217,.5)}}
+.dv-turn{padding:40px 44px 32px;scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 20px}
+.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#e9e9ed;color:#161826;border-radius:4px;text-decoration:none}
+.dv-tname{font:500 13px/1.2 Inter,system-ui,sans-serif;color:#e9e9ed}
+.dv-opts{display:flex;flex-wrap:wrap;gap:36px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:#3f424d;color:#e9e9ed;border-radius:5px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 12px/1.4 Inter,system-ui,sans-serif;color:#9397ab;max-width:412px}
+.dv-card{max-width:100%}
+.dv-opt:target .dv-oid{background:#9184d9;color:#161826}
+.dv-next{margin:26px 0 0;font:12px/1.5 Inter,system-ui,sans-serif;color:#9397ab}
+.wc-scroll::-webkit-scrollbar{display:none}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t1" style="padding-top:36px">
+  <div style="max-width:720px;margin-bottom:28px;font-size:13px;line-height:1.55;color:#9397ab">
+    <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#9184d9;margin-bottom:6px">WalkCompanion · walk screen redesign</div>
+    <div style="font-size:20px;font-weight:500;color:#e9e9ed;margin-bottom:8px;line-height:1.2">Now playing: the current fact is the screen</div>
+    <p style="margin:0 0 6px">Assumptions from the code: one screen (Start/Stop, Random fact, heard list, key settings). Roadmap step 4 adds tag preferences and like/dislike, so both are built in. Nocturne dark ground, Inter, outlined primary actions, accent as line and glow. Toronto seed facts. Press <strong style="color:#e9e9ed;font-weight:500">Start walk</strong> to simulate approaching places; use Tweaks to change pacing. The current app is recreated in <a href="WalkCompanion Current.dc.html">WalkCompanion Current</a>.</p>
+  </div>
+  <div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Walk screen</span></div>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="1b">
+      <div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a><span><strong style="color:#e9e9ed;font-weight:500">Now playing.</strong> The current fact is the hero; drag it right to like, left to dislike. Tags live in a bottom sheet behind “Tune”.</span></div>
+      <div class="dv-card">
+      <x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" dark="{{ true }}" hint-size="412px,892px">
+        <div style="height:100%;position:relative;display:flex;flex-direction:column;background:var(--color-bg);color:var(--color-text);padding:6px 20px 0;box-sizing:border-box;overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;height:48px">
+            <div style="font-size:18px;font-weight:500;letter-spacing:-.01em">WalkCompanion</div>
+            <button class="btn btn-icon btn-ghost" aria-label="Settings" style="color:var(--color-neutral-400)"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm88-29.84q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.21,107.21,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.71,107.71,0,0,0-26.25-10.87,8,8,0,0,0-7.06,1.49L130.16,40Q128,40,125.84,40L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,125.84Q40,128,40,130.16L25.11,148.8a8,8,0,0,0-1.48,7.06,107.21,107.21,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.49L125.84,216q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3L215.46,186a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.49-7.06Zm-16.1-6.5a73.93,73.93,0,0,1,0,8.68,8,8,0,0,0,1.74,5.48l14.19,17.73a91.57,91.57,0,0,1-6.23,15L187,173.11a8,8,0,0,0-5.1,2.64,74.11,74.11,0,0,1-6.14,6.14,8,8,0,0,0-2.64,5.1l-2.51,22.58a91.32,91.32,0,0,1-15,6.23l-17.74-14.19a8,8,0,0,0-5-1.75h-.48a73.93,73.93,0,0,1-8.68,0,8,8,0,0,0-5.48,1.74L100.45,215.8a91.57,91.57,0,0,1-15-6.23L82.89,187a8,8,0,0,0-2.64-5.1,74.11,74.11,0,0,1-6.14-6.14,8,8,0,0,0-5.1-2.64L46.43,170.6a91.32,91.32,0,0,1-6.23-15l14.19-17.74a8,8,0,0,0,1.74-5.48,73.93,73.93,0,0,1,0-8.68,8,8,0,0,0-1.74-5.48L40.2,100.45a91.57,91.57,0,0,1,6.23-15L69,82.89a8,8,0,0,0,5.1-2.64,74.11,74.11,0,0,1,6.14-6.14A8,8,0,0,0,82.89,69L85.4,46.43a91.32,91.32,0,0,1,15-6.23l17.74,14.19a8,8,0,0,0,5.48,1.74,73.93,73.93,0,0,1,8.68,0,8,8,0,0,0,5.48-1.74L155.55,40.2a91.57,91.57,0,0,1,15,6.23L173.11,69a8,8,0,0,0,2.64,5.1,74.11,74.11,0,0,1,6.14,6.14,8,8,0,0,0,5.1,2.64l22.58,2.51a91.32,91.32,0,0,1,6.23,15l-14.19,17.74A8,8,0,0,0,199.87,123.66Z"/></svg></button>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;height:24px;margin-top:4px;font-size:12px;color:var(--color-neutral-500)">
+            <span style="width:6px;height:6px;border-radius:50%;flex:none;background:{{ bDot }}"></span>
+            <span>{{ bStatus }}</span>
+          </div>
+          <div style="position:relative;margin-top:10px;height:292px;touch-action:pan-y">
+            <sc-if value="{{ bHasCard }}" hint-placeholder-val="{{ true }}">
+              <div style="position:absolute;inset:8px 8px -8px;border-radius:var(--radius-lg);background:var(--color-neutral-900);opacity:.5"></div>
+              <div onPointerDown="{{ bDown }}" onPointerMove="{{ bMove }}" onPointerUp="{{ bUp }}" onPointerCancel="{{ bUp }}" style="position:absolute;inset:0;border-radius:var(--radius-lg);background:linear-gradient(160deg,var(--color-surface),var(--color-neutral-900));padding:18px 20px;display:flex;flex-direction:column;gap:8px;cursor:grab;user-select:none;box-shadow:0 0 0 1px var(--color-neutral-800);transform:translateX({{ bDragX }}px) rotate({{ bRot }}deg);transition:{{ bTrans }};animation:{{ bAnim }}">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent)">{{ bKicker }}</span>
+                  <span class="tag tag-neutral">{{ bTag }}</span>
+                </div>
+                <div style="font-size:24px;font-weight:500;line-height:1.15;letter-spacing:-.015em;margin-top:6px">{{ bName }}</div>
+                <p style="margin:0;font-size:15px;line-height:1.5;color:var(--color-neutral-300);flex:1;text-wrap:pretty">{{ bSpoken }}</p>
+                <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--color-neutral-500)">
+                  <span>{{ bMeta }}</span>
+                  <div style="display:flex;align-items:flex-end;gap:2px;height:14px;opacity:{{ bBarsOpacity }}">
+                    <span style="width:3px;height:14px;background:var(--color-accent);border-radius:2px;transform-origin:bottom;animation:wc-pulse .9s ease-in-out infinite"></span>
+                    <span style="width:3px;height:14px;background:var(--color-accent);border-radius:2px;transform-origin:bottom;animation:wc-pulse .9s ease-in-out .15s infinite"></span>
+                    <span style="width:3px;height:14px;background:var(--color-accent);border-radius:2px;transform-origin:bottom;animation:wc-pulse .9s ease-in-out .3s infinite"></span>
+                    <span style="width:3px;height:14px;background:var(--color-accent);border-radius:2px;transform-origin:bottom;animation:wc-pulse .9s ease-in-out .45s infinite"></span>
+                  </div>
+                </div>
+                <div style="position:absolute;top:16px;left:16px;padding:4px 10px;border:1.5px solid var(--color-accent);color:var(--color-accent);border-radius:6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;transform:rotate(-8deg);opacity:{{ bLikeStamp }}">More like this</div>
+                <div style="position:absolute;top:16px;right:16px;padding:4px 10px;border:1.5px solid var(--color-neutral-400);color:var(--color-neutral-300);border-radius:6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;transform:rotate(8deg);opacity:{{ bDislikeStamp }}">Less of this</div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ bNoCard }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute;inset:0;border-radius:var(--radius-lg);border:1px dashed var(--color-neutral-800);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:24px;color:var(--color-neutral-500);font-size:13px;line-height:1.5">
+                <svg width="28" height="28" viewBox="0 0 256 256" fill="currentColor" style="color:var(--color-neutral-700)"><path d="M197.58,129.06,146,110l-19-51.62a15.92,15.92,0,0,0-29.88,0L78,110l-51.62,19a15.92,15.92,0,0,0,0,29.88L78,178l19,51.62a15.92,15.92,0,0,0,29.88,0L146,178l51.62-19a15.92,15.92,0,0,0,0-29.88ZM137,164.22a8,8,0,0,0-4.74,4.74L112,223.85,91.78,169A8,8,0,0,0,87,164.22L32.15,144,87,123.78A8,8,0,0,0,91.78,119L112,64.15,132.22,119a8,8,0,0,0,4.74,4.74L191.85,144ZM144,40a8,8,0,0,1,8-8h16V16a8,8,0,0,1,16,0V32h16a8,8,0,0,1,0,16H184V64a8,8,0,0,1-16,0V48H152A8,8,0,0,1,144,40ZM248,88a8,8,0,0,1-8,8h-8v8a8,8,0,0,1-16,0V96h-8a8,8,0,0,1,0-16h8V72a8,8,0,0,1,16,0v8h8A8,8,0,0,1,248,88Z"/></svg>
+                <span>{{ bEmptyText }}</span>
+              </div>
+            </sc-if>
+          </div>
+          <div style="display:flex;justify-content:center;gap:16px;margin-top:14px;height:44px">
+            <button class="btn btn-secondary btn-icon" onClick="{{ bDislikeBtn }}" aria-label="Less of this" style="width:44px;height:44px;border-radius:50%;opacity:{{ bReactOpacity }}"><svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+            <button class="btn btn-primary btn-icon" onClick="{{ bReplay }}" aria-label="Hear again" style="width:44px;height:44px;border-radius:50%;opacity:{{ bReactOpacity }}"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9-5.5z"/></svg></button>
+            <button class="btn btn-secondary btn-icon" onClick="{{ bLikeBtn }}" aria-label="More like this" style="width:44px;height:44px;border-radius:50%;opacity:{{ bReactOpacity }};color:{{ bLikeBtnColor }}"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M178,40c-20.65,0-38.73,8.88-50,23.89C116.73,48.88,98.65,40,78,40a62.07,62.07,0,0,0-62,62c0,70,103.79,126.66,108.21,129a8,8,0,0,0,7.58,0C136.21,228.66,240,172,240,102A62.07,62.07,0,0,0,178,40ZM128,214.8C109.74,204.16,32,155.69,32,102A46.06,46.06,0,0,1,78,56c19.45,0,35.78,10.36,42.6,27a8,8,0,0,0,14.8,0c6.82-16.67,23.15-27,42.6-27a46.06,46.06,0,0,1,46,46C224,155.61,146.24,204.15,128,214.8Z"/></svg></button>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:16px">
+            <button class="btn btn-primary" onClick="{{ bToggle }}" style="flex:1;height:52px;font-size:16px;gap:10px">
+              <span style="display:inline-block;width:10px;height:10px;border-radius:{{ bIconRadius }};background:currentColor"></span>{{ bMainLabel }}
+            </button>
+            <button class="btn btn-secondary" onClick="{{ bOpenSheet }}" style="height:52px;padding:0 16px">Tune · {{ bTagCount }}</button>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:18px;margin-bottom:4px">
+            <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-500)">Earlier on this walk</div>
+            <button class="btn btn-ghost" onClick="{{ bRandom }}" style="font-size:12px;height:28px">Random fact</button>
+          </div>
+          <div class="wc-scroll" style="flex:1;overflow-y:auto;margin:0 -20px;padding:0 20px 20px;scrollbar-width:none">
+            <sc-for list="{{ bEarlier }}" as="h" hint-placeholder-count="0">
+              <div onClick="{{ h.show }}" style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;cursor:pointer;background:linear-gradient(to right,transparent,var(--color-divider) 48px,var(--color-divider) calc(100% - 48px),transparent) no-repeat bottom / 100% 1px">
+                <div style="min-width:0">
+                  <div style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ h.name }}</div>
+                  <div style="font-size:11px;color:var(--color-neutral-500)">{{ h.tag }} · {{ h.time }}</div>
+                </div>
+                <span style="font-size:11px;color:{{ h.reactColor }};flex:none">{{ h.reactLabel }}</span>
+              </div>
+            </sc-for>
+            <sc-if value="{{ bEarlierEmpty }}" hint-placeholder-val="{{ true }}">
+              <div style="font-size:12px;color:var(--color-neutral-600);padding:8px 0">Facts you pass appear here for replay.</div>
+            </sc-if>
+          </div>
+          <sc-if value="{{ bSheet }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ bCloseSheet }}" style="position:absolute;inset:0;background:color-mix(in srgb,var(--color-neutral-900) 60%,transparent)"></div>
+            <div style="position:absolute;left:0;right:0;bottom:0;background:var(--color-surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;box-shadow:var(--shadow-lg);padding:12px 20px 24px;display:flex;flex-direction:column;gap:14px">
+              <div style="width:36px;height:4px;border-radius:2px;background:var(--color-neutral-700);margin:0 auto"></div>
+              <div>
+                <div style="font-size:18px;font-weight:500">What do you want to hear?</div>
+                <div style="font-size:12px;color:var(--color-neutral-500);margin-top:2px">Nothing selected means history and architecture first.</div>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px">
+                <sc-for list="{{ bTags }}" as="t" hint-placeholder-count="7">
+                  <button class="{{ t.cls }}" onClick="{{ t.toggle }}" style="height:34px;padding:0 14px;font-size:13px;cursor:pointer;border-width:1px;border-style:solid;font-family:inherit">{{ t.name }}</button>
+                </sc-for>
+              </div>
+              <button class="btn btn-primary btn-block" onClick="{{ bCloseSheet }}" style="height:44px;margin-top:4px">Done</button>
+            </div>
+          </sc-if>
+        </div>
+      </x-import>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "add the Settings sheet for the API key" · "make the Start button glance-sized" · "show what the card looks like mid-swipe"</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;autoWalk&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Simulation&quot;},&quot;approachSeconds&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:5,&quot;min&quot;:2,&quot;max&quot;:12,&quot;step&quot;:1,&quot;unit&quot;:&quot;s&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Simulation&quot;},&quot;aiRewrite&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Content&quot;}}">
+const SEED = [
+  { id: 'cn-tower', name: 'CN Tower', tags: ['Architecture', 'Famous people'], fact: 'The CN Tower was the tallest free-standing structure in the world for 32 years after it opened in 1976. It was built by Canadian National Railway mainly as a broadcast antenna.' },
+  { id: 'flatiron', name: 'Gooderham Building', tags: ['History', 'Architecture'], fact: 'The red-brick Gooderham Building was finished in 1892, a decade before the famous Flatiron in New York. It was the office of the Gooderham and Worts distillery family.' },
+  { id: 'old-city-hall', name: 'Old City Hall', tags: ['Fun fact', 'Hidden gem'], fact: 'Look up at the gargoyles on Old City Hall. Architect E. J. Lennox carved caricatures of the councillors who criticised his budget, and hid his own name in the stonework.' },
+  { id: 'kensington', name: 'Kensington Market', tags: ['Local tips', 'Pop culture'], fact: 'Kensington Market has been a first stop for newcomers since the early 1900s, from Jewish merchants to Portuguese, Caribbean, and Latin American families. Locals swear by the pedestrian Sundays in summer.' },
+];
+const TAGS = ['History', 'Architecture', 'Fun fact', 'Pop culture', 'Famous people', 'Hidden gem', 'Local tips'];
+const fresh = () => ({ walking: false, fix: false, speaking: null, next: null, dist: 0, history: [], tags: ['History', 'Architecture'], sheet: false, dragX: 0, dragging: false, startX: 0, queue: [], shown: null, done: false });
+const fmt = t => { const d = new Date(t); return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`; };
+const shuffle = a => a.map(x => [Math.random(), x]).sort((p, q) => p[0] - q[0]).map(p => p[1]);
+const CHIP_ON = 'tag tag-accent', CHIP_OFF = 'tag tag-neutral';
+
+class Component extends DCLogic {
+  state = { b: fresh() };
+  timers = [];
+  componentWillUnmount() { this.clear(); }
+  clear() { this.timers.forEach(clearTimeout); this.timers = []; }
+  later(ms, fn) { this.timers.push(setTimeout(fn, ms)); }
+  upd(patch) { this.setState(s => ({ b: { ...s.b, ...(typeof patch === 'function' ? patch(s.b) : patch) } })); }
+  secs() { return Math.max(2, Number(this.props.approachSeconds ?? 5)); }
+
+  orderQueue(st) {
+    const pref = SEED.filter(p => p.tags.some(t => st.tags.includes(t)));
+    const rest = SEED.filter(p => !pref.includes(p));
+    return [...shuffle(pref), ...shuffle(rest)];
+  }
+  start() {
+    this.clear();
+    this.upd(st => ({ walking: true, fix: false, history: [], speaking: null, next: null, shown: null, done: false, queue: this.orderQueue(st) }));
+    this.later(1500, () => { this.upd({ fix: true }); if (this.props.autoWalk ?? true) this.approach(); });
+  }
+  stop() { this.clear(); this.upd({ walking: false, speaking: null, next: null, fix: false }); }
+  approach() {
+    const st = this.state.b;
+    if (!st.walking) return;
+    if (!st.queue.length) { this.upd({ next: null, done: true }); return; }
+    const next = st.queue[0];
+    this.upd({ next, dist: 320, done: false });
+    const step = () => {
+      const s = this.state.b;
+      if (!s.walking || !s.next) return;
+      if (s.dist > 120) { this.upd({ dist: s.dist - 40 }); this.later((this.secs() * 1000) / 6, step); }
+      else this.speak(s.next, `${Math.round(s.dist)} m away`);
+    };
+    this.later((this.secs() * 1000) / 6, step);
+  }
+  speak(poi, why) {
+    const st = this.state.b;
+    const tag = poi.tags.find(t => st.tags.includes(t)) || poi.tags[0];
+    const item = { ...poi, tag, spoken: poi.fact, at: Date.now(), reaction: null, why, key: `${poi.id}-${Date.now()}` };
+    this.upd(s => ({ speaking: item.key, next: null, shown: item.key, queue: s.queue.filter(p => p.id !== poi.id), history: [item, ...s.history] }));
+    this.later(4200, () => {
+      this.upd({ speaking: null });
+      if (this.state.b.walking && (this.props.autoWalk ?? true)) this.later(1200, () => this.approach());
+    });
+  }
+  random() {
+    const st = this.state.b;
+    if (st.speaking) return;
+    const heard = new Set(st.history.map(h => h.id));
+    const pool = SEED.filter(p => !heard.has(p.id));
+    const c = pool.length ? pool : SEED;
+    this.speak(c[Math.floor(Math.random() * c.length)], 'random');
+  }
+  react(key, r) { this.upd(s => ({ history: s.history.map(h => h.key === key ? { ...h, reaction: h.reaction === r ? null : r } : h) })); }
+  toggleTag(name) { this.upd(s => ({ tags: s.tags.includes(name) ? s.tags.filter(t => t !== name) : [...s.tags, name] })); }
+  status(st) {
+    if (!st.walking) return st.history.length ? 'Walk ended · 27 places loaded' : '27 places loaded';
+    if (!st.fix) return 'Waiting for a GPS fix…';
+    const sp = st.history.find(h => h.key === st.speaking);
+    if (sp) return `Speaking · ${sp.name}`;
+    if (st.next) return `Next up · ${st.next.name} · ${st.dist} m`;
+    if (st.done) return 'Nothing new nearby · keep walking';
+    return '43.64260, -79.38710 · ±12 m · 27 places loaded';
+  }
+  reactLabel(h) { return h.reaction === 'like' ? 'More like this' : h.reaction === 'dislike' ? 'Less of this' : 'Tap to hear again'; }
+  reactColor(h) { return h.reaction === 'like' ? 'var(--color-accent)' : h.reaction === 'dislike' ? 'var(--color-neutral-400)' : 'var(--color-neutral-600)'; }
+
+  renderVals() {
+    const b = this.state.b;
+    const ai = this.props.aiRewrite ?? true;
+    const meta = h => (ai ? 'Rewritten by Gemini · ' : 'Wikipedia · ') + h.why;
+    const shown = b.history.find(h => h.key === b.shown) || b.history[0] || null;
+    const speaking = shown && shown.key === b.speaking;
+    const dx = b.dragX;
+    return {
+      bStatus: this.status(b),
+      bDot: b.walking ? (b.speaking ? 'var(--color-accent)' : 'var(--color-accent-700)') : 'var(--color-neutral-700)',
+      bHasCard: !!shown, bNoCard: !shown,
+      bEmptyText: b.walking ? (b.fix ? 'Listening for places nearby…' : 'Waiting for a GPS fix…') : 'Start a walk. The fact for each place you pass shows here, read aloud.',
+      bKicker: speaking ? 'Now playing' : shown && shown.key === (b.history[0] || {}).key ? 'Last heard' : 'Earlier',
+      bTag: shown ? shown.tag : '', bName: shown ? shown.name : '', bSpoken: shown ? shown.spoken : '',
+      bMeta: shown ? meta(shown) : '',
+      bBarsOpacity: speaking ? 1 : 0,
+      bDragX: dx, bRot: dx / 22,
+      bTrans: b.dragging ? 'none' : 'transform .28s cubic-bezier(.2,.8,.2,1)',
+      bAnim: speaking && !b.dragging ? 'wc-glow 1.6s ease-in-out infinite' : 'none',
+      bLikeStamp: Math.min(1, Math.max(0, dx / 80)) || (shown && shown.reaction === 'like' && !b.dragging ? 1 : 0),
+      bDislikeStamp: Math.min(1, Math.max(0, -dx / 80)) || (shown && shown.reaction === 'dislike' && !b.dragging ? 1 : 0),
+      bDown: e => { e.currentTarget.setPointerCapture(e.pointerId); this.upd({ dragging: true, startX: e.clientX, dragX: 0 }); },
+      bMove: e => { if (b.dragging) this.upd({ dragX: e.clientX - b.startX }); },
+      bUp: () => {
+        if (!b.dragging) return;
+        if (shown && Math.abs(dx) > 90) this.react(shown.key, dx > 0 ? 'like' : 'dislike');
+        this.upd({ dragging: false, dragX: 0 });
+      },
+      bReactOpacity: shown ? 1 : 0.35,
+      bLikeBtnColor: shown && shown.reaction === 'like' ? 'var(--color-accent)' : 'var(--color-text)',
+      bLikeBtn: () => shown && this.react(shown.key, 'like'),
+      bDislikeBtn: () => shown && this.react(shown.key, 'dislike'),
+      bReplay: () => {},
+      bToggle: () => (b.walking ? this.stop() : this.start()),
+      bMainLabel: b.walking ? 'Stop walk' : 'Start walk',
+      bIconRadius: b.walking ? '2px' : '50%',
+      bTagCount: b.tags.length ? `${b.tags.length}` : 'all',
+      bOpenSheet: () => this.upd({ sheet: true }),
+      bCloseSheet: () => this.upd({ sheet: false }),
+      bSheet: b.sheet,
+      bTags: TAGS.map(name => ({ name, cls: b.tags.includes(name) ? CHIP_ON : CHIP_OFF, toggle: () => this.toggleTag(name) })),
+      bRandom: () => this.random(),
+      bEarlier: b.history.filter(h => h !== shown).map(h => ({ ...h, time: fmt(h.at), reactLabel: h.reaction ? this.reactLabel(h) : '', reactColor: this.reactColor(h), show: () => this.upd({ shown: h.key }) })),
+      bEarlierEmpty: b.history.filter(h => h !== shown).length === 0,
+    };
+  }
+}
+</script>
+</body>
+</html>
