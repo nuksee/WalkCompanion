@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "WalkCompanion",
+    "slug": "walkcompanion",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "ca.walkcompanion.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "WalkCompanion uses your location to tell you about places around you as you walk.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "WalkCompanion uses your location in the background so narration continues while your phone is locked.",
+        "UIBackgroundModes": ["location", "audio"]
+      }
+    },
+    "android": {
+      "package": "ca.walkcompanion.app",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION"
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "WalkCompanion uses your location in the background so narration continues while your phone is locked.",
+          "isAndroidBackgroundLocationEnabled": true
+        }
+      ],
+      "expo-notifications"
+    ]
+  }
+}
