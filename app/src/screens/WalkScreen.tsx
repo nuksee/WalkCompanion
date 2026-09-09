@@ -403,7 +403,8 @@ export function WalkScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  container: { flex: 1, paddingHorizontal: 20, paddingTop: 6 },
+  // Breathing room below the status bar inset, which SafeAreaView already applies.
+  container: { flex: 1, paddingHorizontal: 20, paddingTop: 20 },
   header: { height: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title: { fontSize: 18, fontWeight: '500', letterSpacing: -0.18, color: colors.text },
   iconButton: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md },
