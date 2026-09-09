@@ -3,9 +3,10 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
-import { useWalkLocation } from '../location/useWalkLocation';
+import { useWalkLocation, type WalkPosition } from '../location/useWalkLocation';
 import { loadTags, saveTags } from '../facts/preferenceStore';
 import { DEFAULT_TAGS, summariseFeedback, type Reaction } from '../facts/preferences';
+import { buildDemoRoute, positionAlongRoute, WALK_SPEED_MPS } from '../facts/demoRoute';
 import { distanceMeters, nextUpcoming, pickNextFact } from '../facts/proximity';
 import { torontoSeed } from '../facts/torontoSeed';
 import { displayTag, type FactTag, type PointOfInterest } from '../facts/types';
@@ -35,6 +36,15 @@ const REFETCH_DISTANCE_M = 300;
 /** Used by "Random fact" when there is no GPS fix, so the feature works at home. */
 const HOME_TEST_COORD = { latitude: 43.6426, longitude: -79.3871 }; // CN Tower
 
+/**
+ * Demo mode speeds, cycled by long-pressing "Random fact": off, then a real
+ * walking pace and two accelerations. Deliberately has no on-screen control;
+ * the log is the only signal it is on, and it resets on every app launch.
+ */
+const DEMO_SPEEDS = [0, 1, 5, 20];
+/** How often the simulated position advances. */
+const DEMO_TICK_MS = 1000;
+
 const keyOf = (item: NarratedFact) => `${item.poi.id}-${item.at}`;
 
 const clockTime = (at: number) => {
@@ -44,7 +54,11 @@ const clockTime = (at: number) => {
 
 export function WalkScreen() {
   const [walking, setWalking] = useState(false);
-  const { permission, position, error } = useWalkLocation(walking);
+  const [demoSpeed, setDemoSpeed] = useState(0);
+  const [demoPosition, setDemoPosition] = useState<WalkPosition | null>(null);
+  const { permission, position: realPosition, error } = useWalkLocation(walking);
+  // Demo mode replaces the GPS fix everywhere downstream; nothing else changes.
+  const position = demoSpeed > 0 && demoPosition ? demoPosition : realPosition;
   const [history, setHistory] = useState<NarratedFact[]>([]);
   const [pois, setPois] = useState<PointOfInterest[]>(torontoSeed);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -76,6 +90,9 @@ export function WalkScreen() {
   reactionsRef.current = reactions;
   const historyRef = useRef(history);
   historyRef.current = history;
+  // The demo route is anchored to the real fix without restarting on every update.
+  const realPositionRef = useRef(realPosition);
+  realPositionRef.current = realPosition;
 
   const toggleTag = (tag: FactTag) => {
     setTags((current) => {
@@ -147,6 +164,27 @@ export function WalkScreen() {
       });
   }, []);
 
+  // Demo mode: walk a loop around the last real fix (or the CN Tower without one),
+  // feeding simulated positions through the same trigger path as a real walk.
+  useEffect(() => {
+    if (!walking || demoSpeed === 0) {
+      setDemoPosition(null);
+      return;
+    }
+    const origin = realPositionRef.current ?? HOME_TEST_COORD;
+    const route = buildDemoRoute(origin);
+    log('demo', `${demoSpeed}x from`, origin.latitude.toFixed(4), origin.longitude.toFixed(4));
+    let travelled = 0;
+    const advance = () => {
+      const at = positionAlongRoute(route, travelled);
+      setDemoPosition({ ...at, accuracy: 5, timestamp: Date.now() });
+      travelled += (WALK_SPEED_MPS * demoSpeed * DEMO_TICK_MS) / 1000;
+    };
+    advance();
+    const timer = setInterval(advance, DEMO_TICK_MS);
+    return () => clearInterval(timer);
+  }, [walking, demoSpeed]);
+
   // Load nearby Wikipedia articles when the walk starts and after moving a few hundred metres.
   useEffect(() => {
     if (!walking || !position) return;
@@ -215,6 +253,15 @@ export function WalkScreen() {
     } finally {
       setBusy(false);
     }
+  };
+
+  /** Long-press on "Random fact" cycles demo mode: off, 1x, 5x, 20x. */
+  const cycleDemo = () => {
+    setDemoSpeed((current) => {
+      const next = DEMO_SPEEDS[(DEMO_SPEEDS.indexOf(current) + 1) % DEMO_SPEEDS.length]!;
+      log('demo', next === 0 ? 'off' : `${next}x simulated walk`);
+      return next;
+    });
   };
 
   const shown = useMemo(
@@ -346,6 +393,7 @@ export function WalkScreen() {
           <Text style={styles.listHeaderText}>EARLIER ON THIS WALK</Text>
           <Pressable
             onPress={randomFact}
+            onLongPress={cycleDemo}
             disabled={busy}
             style={({ pressed }) => [styles.ghost, pressed && styles.ghostPressed]}
           >
